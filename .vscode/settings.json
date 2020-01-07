@@ -1,0 +1,10 @@
+{
+    "python.pythonPath": "C:\\Users\\TJ\\AppData\\Local\\Programs\\Python\\Python37\\python.exe",
+    "files.associations": {
+        "cmath": "c",
+        "waves.h": "c"
+    },
+    "git.ignoreLimitWarning": true,
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true
+}
