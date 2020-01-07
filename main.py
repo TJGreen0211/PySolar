@@ -132,7 +132,7 @@ class Application(Widget):
 		opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, 0)
 		opengl.glBindTexture(opengl.GL_TEXTURE_2D, 0)
 
-		g = geometry.Geometry(subdivisions=4)
+		"""g = geometry.Geometry(subdivisions=4)
 		g.tetrahedron_sphere(4)
 		#print(g.tetrahedron_divisions)
 		#print(g.tetrahedron_points)
@@ -140,7 +140,7 @@ class Application(Widget):
 		opengl.glBindBuffer(opengl.GL_ARRAY_BUFFER, self.sphereVB)
 		opengl.glBufferData(opengl.GL_ARRAY_BUFFER, g.point_byte_size + g.normal_byte_size, None, opengl.GL_STATIC_DRAW)
 		opengl.glBufferSubData(opengl.GL_ARRAY_BUFFER, 0,	g.point_byte_size, bytearray(g.tetrahedron_points))
-		opengl.glBufferSubData(opengl.GL_ARRAY_BUFFER, g.point_byte_size, g.normal_byte_size, g.tetrahedron_normals)
+		opengl.glBufferSubData(opengl.GL_ARRAY_BUFFER, g.point_byte_size, g.normal_byte_size, g.tetrahedron_normals)"""
 
 		#
 		#

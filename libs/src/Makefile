@@ -3,7 +3,7 @@ CFLAGS = -Wall
 PROG = geometry
 
 FILE_NAME = $(PROG)
-BIN_DIR = C:/Users/TJ/Documents/programming/python/PyGL/bin
+BIN_DIR = C:/Users/TJ/Documents/programming/python/PySolar/bin
 MAKE_DIR = $(PWD)
 SRCS = pyGeometry.c sphere.c matrixMath.c
 OBJS = pyGeometry.o sphere.o matrixMath.o
