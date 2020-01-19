@@ -145,14 +145,21 @@ class Application(Widget):
         opengl.glBufferSubData(opengl.GL_ARRAY_BUFFER, 0,	g.point_byte_size, bytearray(g.tetrahedron_points))
         opengl.glBufferSubData(opengl.GL_ARRAY_BUFFER, g.point_byte_size, g.normal_byte_size, g.tetrahedron_normals)"""
 
+        self.g = geometry.Geometry(subdivisions=4)
+        self.g.tetrahedron_sphere(1)
+        print(self.g.tetrahedron_points)
+
+
+        self.sphere = np.array(self.g.tetrahedron_points, dtype=np.float32)
+        print(self.sphere)
         #
         #
         (self.vbo,) = opengl.glGenBuffers(1)
         opengl.glBindBuffer(opengl.GL_ARRAY_BUFFER, self.vbo)
-        opengl.glBufferData(opengl.GL_ARRAY_BUFFER, DATA.nbytes, DATA.tobytes(), opengl.GL_DYNAMIC_DRAW)
-        (self.ibo,) = opengl.glGenBuffers(1)
-        opengl.glBindBuffer(opengl.GL_ELEMENT_ARRAY_BUFFER, self.ibo)
-        opengl.glBufferData(opengl.GL_ELEMENT_ARRAY_BUFFER, INDEX.nbytes, INDEX.tobytes(), opengl.GL_STATIC_DRAW)
+        opengl.glBufferData(opengl.GL_ARRAY_BUFFER, self.sphere.nbytes, self.sphere.tobytes(), opengl.GL_STATIC_DRAW)
+        #(self.ibo,) = opengl.glGenBuffers(1)
+        #opengl.glBindBuffer(opengl.GL_ELEMENT_ARRAY_BUFFER, self.ibo)
+        #opengl.glBufferData(opengl.GL_ELEMENT_ARRAY_BUFFER, INDEX.nbytes, INDEX.tobytes(), opengl.GL_STATIC_DRAW)
 
     def blit_fbo(self):
         opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, self.glfboid)
@@ -171,21 +178,21 @@ class Application(Widget):
         opengl.glClear(opengl.GL_COLOR_BUFFER_BIT)
 
         opengl.glBindBuffer(opengl.GL_ARRAY_BUFFER, self.vbo)
-        opengl.glBindBuffer(opengl.GL_ELEMENT_ARRAY_BUFFER, self.ibo)
+        #opengl.glBindBuffer(opengl.GL_ELEMENT_ARRAY_BUFFER, self.ibo)
 
         opengl.glUseProgram(self.program)
         u_loc = opengl.glGetUniformLocation(self.program, b"u_projection_mat")
         opengl.glUniformMatrix4fv(u_loc, 1, False, np.array(eye).flatten().tobytes())
         a_loc = opengl.glGetAttribLocation(self.program, b"a_position")
         opengl.glEnableVertexAttribArray(0)
-        f = [0.0]
         #print("DATA POINTS", 3*sys.getsizeof(bytearray(f)[0]))
         #print("DATA POINTS", bytearray(f))
         opengl.glVertexAttribPointer(0, 3, opengl.GL_FLOAT, False, 12, 0)
         #opengl.glVertexAttribPointer(0, 3, opengl.GL_FLOAT, opengl.GL_FALSE, 3*sys.getsizeof(data.points[0]), ctypes.c_void_p(0))
 
         opengl.glViewport(0, 0, self.w, self.h)
-        opengl.glDrawElements(opengl.GL_TRIANGLES, 6, opengl.GL_UNSIGNED_INT, 0)
+        #opengl.glDrawElements(opengl.GL_TRIANGLES, 6, opengl.GL_UNSIGNED_INT, 0)
+        opengl.glDrawArrays(opengl.GL_TRIANGLES, 0, len(self.sphere))
         opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, 0)
 
     def update(self, dt):
