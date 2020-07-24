@@ -128,4 +128,10 @@ mat4 mat4Frustum(double left, double right, double bottom, double top, double zN
 mat4 mat4Ortho(double left, double right, double bottom, double top, double zNear, double zFar );
 mat4 mat4LookAt(vec3 eye, vec3 at, vec3 up);
 
+void vec4Print(vec4 v);
+void vec3Print(vec3 v);
+void vec2Print(vec2 v);
+
+void mat4Print(mat4 m);
+
 #endif

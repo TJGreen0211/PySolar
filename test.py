@@ -3,9 +3,11 @@ import os
 import sys
 import numpy as np
 import time
+import unittest
 
 sys.path.insert(1, os.getcwd()+'/bin')
 import geometry
+import camera
 
 def test():
     #numbers = [1, 2, -3, -4, -5, 6]
@@ -56,15 +58,60 @@ def test():
     print([i for i in dx_texture.contents])
 
 def test_lib():
-    g = geometry.Geometry(subdivisions=4)
-    print(g)
-    g.tetrahedron_sphere(4)
-    print(g.tetrahedron_divisions)
-    print(g.tetrahedron_points)
+    pass
+    #g = geometry.Geometry(subdivisions=4)
+    #print(g)
+    #g.tetrahedron_sphere(4)
+    #print(g.tetrahedron_divisions)
+    #print(g.tetrahedron_points)
     #print(g.tetrahedron_normals)
 
+class TestCamera(unittest.TestCase):
+    """Test camera lib"""
+    def __init__(self, *args, **kwargs):
+        super(TestCamera, self).__init__(*args, **kwargs)
+        self.arc_camera = camera.Camera()
+
+    def test_camera_members(self):
+        self.assertEqual(self.arc_camera.yaw, -90.0, "Testing yaw")
+        self.assertEqual(self.arc_camera.pitch, 0.0, "Testing pitch")
+        self.assertEqual(self.arc_camera.movement_speed, 0.1, "Testing movement_speed")
+        self.assertEqual(self.arc_camera.max_speed, 2000.0, "Testing max_speed")
+        self.assertEqual(self.arc_camera.mouse_sensitivity, 0.6, "Testing mouse_sensitivity")
+        self.assertEqual(self.arc_camera.mouse_zoom, 1.0, "Testing mouse_zoom")
+
+    def test_camera_getters(self):
+        identity_matrix = [
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0
+        ]
+        zero_vector = [0.0, 0.0, 0.0]
+        #self.assertEqual(self.arc_camera.view_matrix, -90.0, "Testing arc_camera.view_matrix")
+        self.assertEqual(self.arc_camera.view_rotation, identity_matrix, "Testing arc_camera.view_rotation")
+        self.assertEqual(self.arc_camera.view_translation, identity_matrix, "Testing arc_camera.view_translation")
+        self.assertEqual(self.arc_camera.position, [0.0, 0.0, 1.0], "Testing arc_camera.position")
+        self.assertEqual(self.arc_camera.rotation, zero_vector, "Testing arc_camera.rotation")
+
+    def test_camera_movement(self):
+        self.arc_camera.process_keyboard(0, 10.0)
+        self.arc_camera.process_keyboard(1, 11.0)
+        self.arc_camera.process_keyboard(2, 12.0)
+        self.arc_camera.process_keyboard(3, 13.0)
+        #print(self.arc_camera.position)
+
+    def test_camera_mouse(self):
+        self.arc_camera.process_mouse_movement(0.5, 0.5, 1)
+        print(self.arc_camera.rotation)
+
+    #def test_camera_model_position(self):
+    #    self.arc_camera.camera_model_view_position(0, 0.0)
+    #    #self.assertEqual(self.arc_camera.view_rotation, identity_matrix, "Testing keyboard movement")
+
 if __name__ == "__main__":
-    test_lib()
+    unittest.main()
+    #test_lib()
     #mat_math = ctypes.CDLL(os.getcwd()+"/bin/matrixMath.dll")
     #print(mat_math)
 

@@ -1,12 +1,16 @@
 CC = "C:/Program Files/mingw-w64/x86_64-8.1.0-win32-seh-rt_v6-rev0/mingw64/bin/gcc.exe"
 CFLAGS = -Wall
-PROG = geometry
+#PROG = geometry
+PROG = camera
 
 FILE_NAME = $(PROG)
 BIN_DIR = C:/Users/TJ/Documents/programming/python/PySolar/bin
 MAKE_DIR = $(PWD)
-SRCS = pyGeometry.c sphere.c matrixMath.c
-OBJS = pyGeometry.o sphere.o matrixMath.o
+#SRCS = pyGeometry.c sphere.c matrixMath.c quadcube.c
+#OBJS = pyGeometry.o sphere.o matrixMath.o quadcube.o
+SRCS = matrixMath.c pyCamera.c arcballCamera.c
+OBJS = matrixMath.o pyCamera.o arcballCamera.o
+
 INCLUDE_PATHS = -I C:/Users/TJ/AppData/Local/Programs/Python/Python37/include
 LIBRARY_PATHS = -L C:/Users/TJ/AppData/Local/Programs/Python/Python37/libs -lpython37
 

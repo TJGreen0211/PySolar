@@ -308,17 +308,17 @@ DLL_EXPORT mat4 mat4Rotate(double x, double y, double z) {
 	double b = DegreesToRadians * y;
 	double c = DegreesToRadians * z;
 	mat4 r = MAT4_IDENTITY_MATRIX;
-	r.m[0][0] = cos(b)*cos(c);							
-	r.m[0][1] = -(cos(b)*sin(c));						
+	r.m[0][0] = cos(b)*cos(c);
+	r.m[0][1] = -(cos(b)*sin(c));
 	r.m[0][2] = sin(b);
-	r.m[1][0] = (sin(a)*sin(b)*cos(c))+(cos(a)*sin(c));	
-	r.m[1][1] = -(sin(a)*sin(b)*sin(c))+(cos(a)*cos(c)); 
+	r.m[1][0] = (sin(a)*sin(b)*cos(c))+(cos(a)*sin(c));
+	r.m[1][1] = -(sin(a)*sin(b)*sin(c))+(cos(a)*cos(c));
 	r.m[1][2] = -(sin(a)*cos(b));
 	r.m[2][0] = -(cos(a)*sin(b)*cos(c))+(sin(a)*sin(c));
-	r.m[2][1] = (cos(a)*sin(b)*sin(c))+(sin(a)*cos(c));	
+	r.m[2][1] = (cos(a)*sin(b)*sin(c))+(sin(a)*cos(c));
 	r.m[2][2] = cos(a)*cos(b);
 
-	return r; 
+	return r;
 }
 
 DLL_EXPORT mat4 mat4RotateX(double theta)
@@ -556,18 +556,97 @@ DLL_EXPORT mat2 mat2Transpose(mat2 a) {
 
 DLL_EXPORT mat4 mat4Perspective(double fovy, double aspect, double zNear, double zFar)
 {
-	double top = tan(fovy*(3.14159265358979323846 / 180.0)/2) * zNear;
-	double right = top * aspect;
+	//double half_fovy = fovy*(3.14159265358979323846 / 180.0)/2;
+//
+    //double top = zNear * tan(half_fovy);
+    //double bottom = -top;
+    //double right = top * aspect;
+    //double left = -right;
+	//double sx = 2 * zNear / (right - left);
+    //double sy = 2 * zNear / (top - bottom);
+//
+    //double c2 = - (zFar + zNear) / (zFar - zNear);
+    //double c1 = 2 * zNear * zFar / (zNear - zFar);
+//
+    //double tx = -zNear * (left + right) / (right - left);
+    //double ty = -zNear * (bottom + top) / (top - bottom);
+//
+	//mat4 c = MAT4_ZERO_MATRIX;
+    //c.m[0][0] = sx; c.m[0][1] = 0;  c.m[0][2] = 0;   c.m[0][3] = tx;
+    //c.m[1][0] = 0;  c.m[1][1] = sy; c.m[1][2] = 0;   c.m[1][3] = ty;
+    //c.m[2][0] = 0;  c.m[2][1] = 0;  c.m[2][2] = c2;  c.m[2][3] = c1;
+    //c.m[3][0] = 0;  c.m[3][1] = 0;  c.m[3][2] = -1;  c.m[3][3] = 0;
+//
+	//mat4Print(c);
 
 	mat4 c = MAT4_ZERO_MATRIX;
+	double top = tan(fovy*(3.14159265358979323846 / 180.0)/2) * zNear;
+	double right = top * aspect;
 	c.m[0][0] = zNear/right;
 	c.m[1][1] = zNear/top;
 	c.m[2][2] = -(zFar + zNear)/(zFar - zNear);
 	c.m[2][3] = -2.0*zFar*zNear/(zFar - zNear);
 	c.m[3][2] = -1.0;
 	c.m[3][3] = 0.0;
+
 	return c;
 }
+
+/*
+self.createFrustum = function (left, right, bottom, top, near, far) {
+
+    var M = this.create();
+
+    // Make sure there is no division by zero
+    if (left === right || bottom === top || near === far) {
+      console.log("Invalid createFrustum parameters");
+      self.setIdentity(M);
+    }
+    if (near <= 0 || far <= 0) {
+      console.log('For a perspective projection, the near and far distances must be positive');
+      self.setIdentity(M);
+    } else {
+
+      var sx = 2 * near / (right - left);
+      var sy = 2 * near / (top - bottom);
+
+      var c2 = - (far + near) / (far - near);
+      var c1 = 2 * near * far / (near - far);
+
+      var tx = -near * (left + right) / (right - left);
+      var ty = -near * (bottom + top) / (top - bottom);
+
+      M[0] = sx; M[4] = 0;  M[8] = 0;    M[12] = tx;
+      M[1] = 0;  M[5] = sy; M[9] = 0;    M[13] = ty;
+      M[2] = 0;  M[6] = 0;  M[10] = c2;  M[14] = c1;
+      M[3] = 0;  M[7] = 0;  M[11] = -1;  M[15] = 0;
+    }
+
+    return M;
+  };
+*/
+
+/*
+self.createPerspective = function (fovy, aspect, near, far) {
+
+    var M;
+
+    if (fovy <= 0 || fovy >= 180 || aspect <= 0 || near >= far || near <= 0) {
+      console.log('Invalid parameters to createPerspective');
+      self.setIdentity(M);
+    } else {
+      var half_fovy = self.toRadians(fovy) / 2;
+
+      var top = near * Math.tan(half_fovy);
+      var bottom = -top;
+      var right = top * aspect;
+      var left = -right;
+
+      M = self.createFrustum(left, right, bottom, top, near, far);
+    }
+
+    return M;
+  };*/
 
 DLL_EXPORT mat4 mat4Frustum(double left, double right, double bottom, double top, double zNear, double zFar)
 {
@@ -623,4 +702,23 @@ DLL_EXPORT mat4 mat4LookAt(vec3 eye, vec3 at, vec3 up)
 	mat4 d = mat4Translate(eyeInv.v[0], eyeInv.v[1], eyeInv.v[2], 1.0);
 	mat4 out = mat4Multiply(c, d);
 	return out;
+}
+
+
+void vec4Print(vec4 v) {
+	printf("x: %f, y: %f, z: %f, w: %f\n", v.v[0], v.v[1], v.v[2], v.v[3]);
+}
+void vec3Print(vec3 v) {
+	printf("x: %f, y: %f, z: %f\n", v.v[0], v.v[1], v.v[2]);
+}
+void vec2Print(vec2 v) {
+	printf("x: %f, y: %f\n", v.v[0], v.v[1]);
+}
+
+void mat4Print(mat4 m) {
+	for(int i = 0; i < 16; i++) {
+		printf("%f ", m.m[(int)(i/4)][i%4]);
+		if(i%4 == 3)
+			printf("\n");
+	}
 }

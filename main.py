@@ -5,6 +5,7 @@ import os
 import sys
 import math
 import ctypes
+import time
 import numpy as np
 
 import kivy
@@ -27,17 +28,24 @@ sys.path.insert(1, os.getcwd()+'/bin')
 
 import waves
 import geometry
+import camera
 
 #pylint: enable=wrong-import-position
 
 VERTEX_CODE = b"""
-    uniform mat4 u_projection_mat;
+    uniform mat4 projection;
+    uniform mat4 view;
+    uniform mat4 model;
     layout(location = 0) in vec3 a_position;
 
     layout(location = 0) out vec4 v_color;
     void main()
     {
-        gl_Position = u_projection_mat*vec4(a_position, 1.0);
+        mat4 aMat4 = mat4(1.0, 0.0, 0.0, 0.0,
+                  0.0, 1.0, 0.0, 0.0,
+                  0.0, 0.0, 1.0, 0.0,
+                  0.0, 0.0, 0.0, 1.0);
+        gl_Position = vec4(a_position, 1.0)*model*view*projection;
         v_color = (vec4(a_position, 1.0)+1.0)/2.0;
     } """
 
@@ -79,9 +87,48 @@ class Application(Widget):
         self.setup_kvfbo()
         self.setup_glfbo()
         self.wave_patch = waves.Waves(dimension=128)
+        self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
+        self._keyboard.bind(on_key_down=self._on_keyboard_down)
 
+        self.arcball_camera = camera.Camera()
+        self.perspective_matrix = self.arcball_camera.camera_perspective_matrix(90.0, 640.0/480.0, 0.1, 500.0)
+        self.frame_count = 0
+
+        #self.application_start_time = time.time()
 
         Clock.schedule_interval(self.update_glsl, 1.0 / 60.0)
+
+    def _keyboard_closed(self):
+        self._keyboard.unbind(on_key_down=self._on_keyboard_down)
+        self._keyboard = None
+
+    def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        #delta_time = time.time() - self.application_start_time
+        if keycode[1] == 'w':
+            self.arcball_camera.process_keyboard(0, 0.1)
+        elif keycode[1] == 's':
+            self.arcball_camera.process_keyboard(1, 0.1)
+        elif keycode[1] == 'a':
+            self.arcball_camera.process_keyboard(2, 0.1)
+        elif keycode[1] == 'd':
+            self.arcball_camera.process_keyboard(3, 0.1)
+        return True
+
+    def on_touch_down(self, touch):
+        if touch.is_mouse_scrolling:
+            if touch.button == 'scrolldown':
+                self.arcball_camera.process_mouse_scroll(-0.01)
+            elif touch.button == 'scrollup':
+                self.arcball_camera.process_mouse_scroll(0.01)
+
+
+    def on_touch_move(self, touch):
+        #print("Touch move", touch)
+        screen_position = list(touch.spos)
+        self.arcball_camera.process_mouse_movement(screen_position[0], screen_position[1], 0)
+
+    #def on_touch_up(self, touch):
+    #    print("Touch Release", touch)
 
     def update_glsl(self, *largs):
         self.angle += 0.01
@@ -145,15 +192,11 @@ class Application(Widget):
         opengl.glBufferSubData(opengl.GL_ARRAY_BUFFER, 0,	g.point_byte_size, bytearray(g.tetrahedron_points))
         opengl.glBufferSubData(opengl.GL_ARRAY_BUFFER, g.point_byte_size, g.normal_byte_size, g.tetrahedron_normals)"""
 
-        self.g = geometry.Geometry(subdivisions=4)
-        self.g.tetrahedron_sphere(1)
-        print(self.g.tetrahedron_points)
+        self.g = geometry.Geometry(subdivisions=1)
+        self.g.quadcube(10)
+        self.sphere = np.array(self.g.quadcube_points, dtype=np.float32)
+        self.sphere_normals = np.array(self.g.quadcube_normals, dtype=np.float32)
 
-
-        self.sphere = np.array(self.g.tetrahedron_points, dtype=np.float32)
-        print(self.sphere)
-        #
-        #
         (self.vbo,) = opengl.glGenBuffers(1)
         opengl.glBindBuffer(opengl.GL_ARRAY_BUFFER, self.vbo)
         opengl.glBufferData(opengl.GL_ARRAY_BUFFER, self.sphere.nbytes, self.sphere.tobytes(), opengl.GL_STATIC_DRAW)
@@ -174,6 +217,26 @@ class Application(Widget):
                          [0, 0, 1, 0],
                          [0, 0, 0, 1]], dtype=np.float32)
 
+        perspective_arr = np.array(self.perspective_matrix, dtype=np.float32).reshape(4, 4)
+        view_arr = np.array(self.arcball_camera.view_matrix, dtype=np.float32).reshape(4, 4)
+        model_arr = np.array(self.arcball_camera.view_translation, dtype=np.float32).reshape(4, 4)
+        #model_arr = np.identity(4, dtype=np.float32)
+
+        self.frame_count += 1
+        if self.frame_count %60 == 0:
+            print("\n FRAME: {}".format(self.frame_count))
+            print(self.arcball_camera.view_matrix)
+            print(self.arcball_camera.view_rotation)
+            print(self.arcball_camera.view_translation)
+            print(self.arcball_camera.position)
+            print(self.arcball_camera.rotation)
+            print(self.arcball_camera.yaw)
+            print(self.arcball_camera.pitch)
+            print(self.arcball_camera.movement_speed)
+            print(self.arcball_camera.max_speed)
+            print(self.arcball_camera.mouse_sensitivity)
+            print(self.arcball_camera.mouse_zoom)
+
         opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, targetfbo)
         opengl.glClear(opengl.GL_COLOR_BUFFER_BIT)
 
@@ -181,10 +244,23 @@ class Application(Widget):
         #opengl.glBindBuffer(opengl.GL_ELEMENT_ARRAY_BUFFER, self.ibo)
 
         opengl.glUseProgram(self.program)
-        u_loc = opengl.glGetUniformLocation(self.program, b"u_projection_mat")
-        opengl.glUniformMatrix4fv(u_loc, 1, False, np.array(eye).flatten().tobytes())
-        a_loc = opengl.glGetAttribLocation(self.program, b"a_position")
+        u_loc = opengl.glGetUniformLocation(self.program, b"projection")
+        opengl.glUniformMatrix4fv(u_loc, 1, False, np.array(perspective_arr).flatten().tobytes())
+
+        view_loc = opengl.glGetUniformLocation(self.program, b"view")
+        opengl.glUniformMatrix4fv(view_loc, 1, False, view_arr.flatten().tobytes())
+
+        model_loc = opengl.glGetUniformLocation(self.program, b"model")
+        opengl.glUniformMatrix4fv(model_loc, 1, False, model_arr.flatten().tobytes())
+
+        #a_loc = opengl.glGetAttribLocation(self.program, b"a_position")
+        #opengl.glUniformMatrix4fv(opengl.glGetUniformLocation(self.program, b"model"), 1, True, np.array(model_arr).flatten().tobytes())
+        #perspective = opengl.glGetAttribLocation(self.program, b"perspective")
+        #opengl.glUniformMatrix4fv(opengl.glGetUniformLocation(self.program, b"perspective"), 1, True, np.array(perspective_arr).flatten().tobytes())
+
         opengl.glEnableVertexAttribArray(0)
+
+        #glUniformMatrix4fv(glGetUniformLocation( shader, "projection" ), 1, GL_FALSE, &p.m[0][0]);
         #print("DATA POINTS", 3*sys.getsizeof(bytearray(f)[0]))
         #print("DATA POINTS", bytearray(f))
         opengl.glVertexAttribPointer(0, 3, opengl.GL_FLOAT, False, 12, 0)
@@ -219,8 +295,6 @@ class MainApp(App):
     os.chdir(cwd)
 
     def build(self):
-        #application = ApplicationRun()
-        #Clock.schedule_interval(application.update, 1.0 / 60.0)
         return Application()
 
 def createBuffer(data):
@@ -269,12 +343,6 @@ def createBuffer(data):
     opengl.glUseProgram(0)
     opengl.glBindVertexArray(0)"""
 
-def onMouseButton():
-    pass
-
-def loadDLL(path):
-    return ctypes.CDLL(path)
-
 def bindTextureAttachment(texture_id, texture_data, width, height):
     opengl.glBindTexture(opengl.GL_TEXTURE_2D, texture_id)
     opengl.glTexImage2D(opengl.GL_TEXTURE_2D, 0, opengl.GL_RGBA, width, height, 0, opengl.GL_RGBA, opengl.GL_FLOAT, texture_data)
@@ -300,13 +368,6 @@ def main():
     #waves_lib.destroyWaves()
     print("Program terminated")
 
-def test():
-    #test_lib = ctypes.CDLL("C:/Users/TJ/Documents/programming/python/PyGL/test.dll")
-    mat_math = loadDLL(os.getcwd()+"/bin/matrixMath.dll")
-
-    out = mat_math.mat4RotateX(ctypes.c_double(1.0))
-    print(out)
-
 if __name__ == "__main__":
-    #test()
+    print("Starting program")
     MainApp().run()

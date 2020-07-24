@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#include "linearAlg.h"
+#include "matrixMath.h"
 
 typedef struct quadCube {
 	int size;
@@ -16,6 +16,6 @@ typedef struct quadCube {
 } quadCube;
 
 void createCube(int divisions, quadCube *newQuadCube);
-void destroyCube(quadCube *newQuadCube);
+void deallocCube(quadCube *newQuadCube);
 
 #endif

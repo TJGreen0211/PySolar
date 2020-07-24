@@ -1,8 +1,6 @@
 #ifndef ARCBALLCAMERA_H
 #define ARCBALLCAMERA_H
 
-#include <windows.h>
-
 #include "matrixMath.h"
 
 typedef struct ArcCamera {
@@ -32,9 +30,8 @@ enum Camera_Movement {
 mat4 getViewMatrix(ArcCamera *camera);
 vec4 getCameraPosition(ArcCamera camera, mat4 position);
 
-void updateCameraVectors(ArcCamera *camera);
 void processKeyboard(ArcCamera *camera, enum Camera_Movement direction, double deltaTime);
 void processMouseMovement(ArcCamera *camera, double xpos, double ypos, int resetFlag);
-double processMouseScroll(ArcCamera *camera, double yoffset);
+void processMouseScroll(ArcCamera *camera, double yoffset);
 
 #endif

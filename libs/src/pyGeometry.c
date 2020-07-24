@@ -2,16 +2,20 @@
 #include <Python.h>
 #include "structmember.h"
 #include "sphere.h"
+#include "quadCube.h"
 
 typedef struct PyGeometryInterface {
 	PyObject_HEAD
 	sphere s;
+	quadCube cube;
 	int subdivisions;
 } PyGeometryInterface;
 
 static void Geometry_dealloc(PyGeometryInterface *self) {
     if (&self->s != NULL)
 	    deallocSphere(&self->s);
+	if (&self->cube != NULL)
+	    deallocCube(&self->cube);
 	Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
@@ -54,15 +58,18 @@ static PyObject *tetrahedron_get_points(PyGeometryInterface *self, void *closure
     PyObject * ret = PyCapsule_New(numero, "DOUBLE", NULL);
     return ret;*/
     //int N = self->s.vertexNumber*3;
-	PyObject* python_val = PyList_New(self->s.vertexNumber);
-	for (int i = 0; i < self->s.vertexNumber; i++)
+	PyObject* python_val = PyList_New(self->s.vertexNumber*3);
+	int index_count = 0;
+	for (int i = 0; i < self->cube.vertexNumber; i++)
     {
         PyObject* point_double = Py_BuildValue("d", self->s.points[i].v[0]);
-        PyList_SetItem(python_val, i, point_double);
-        //point_double = Py_BuildValue("d", self->s.normals[i+1]);
-        //PyList_SetItem(python_val, i+1, point_double);
-        //point_double = Py_BuildValue("d", self->s.normals[i+2]);
-        //PyList_SetItem(python_val, i+2, point_double);
+        PyList_SetItem(python_val, index_count, point_double);
+		point_double = Py_BuildValue("d", self->s.points[i].v[1]);
+        PyList_SetItem(python_val, index_count+1, point_double);
+		point_double = Py_BuildValue("d", self->s.points[i].v[2]);
+        PyList_SetItem(python_val, index_count+2, point_double);
+		index_count += 3;
+
     }
     return python_val;
     //return Py_BuildValue("(i)", self->s.nsize);
@@ -84,9 +91,48 @@ static PyObject *tetrahedron_get_normals(PyGeometryInterface *self, void *closur
     return Py_BuildValue("(i)", self->s.vertexNumber);
 }
 
+static PyObject *quadcube_get_points(PyGeometryInterface *self, void *closure)
+{
+	PyObject* python_val = PyList_New(self->cube.vertexNumber*3);
+	int index_count = 0;
+	for (int i = 0; i < self->cube.vertexNumber; i++)
+    {
+        PyObject* point_double = Py_BuildValue("d", self->cube.points[i].v[0]);
+        PyList_SetItem(python_val, index_count, point_double);
+		point_double = Py_BuildValue("d", self->cube.points[i].v[1]);
+        PyList_SetItem(python_val, index_count+1, point_double);
+		point_double = Py_BuildValue("d", self->cube.points[i].v[2]);
+        PyList_SetItem(python_val, index_count+2, point_double);
+		index_count += 3;
+
+    }
+    return python_val;
+}
+
+static PyObject *quadcube_get_normals(PyGeometryInterface *self, void *closure)
+{
+	PyObject* python_val = PyList_New(self->cube.vertexNumber*3);
+	int index_count = 0;
+	for (int i = 0; i < self->cube.vertexNumber; i++)
+    {
+        PyObject* point_double = Py_BuildValue("d", self->cube.normals[i].v[0]);
+        PyList_SetItem(python_val, index_count, point_double);
+		point_double = Py_BuildValue("d", self->cube.normals[i].v[1]);
+        PyList_SetItem(python_val, index_count+1, point_double);
+		point_double = Py_BuildValue("d", self->cube.normals[i].v[2]);
+        PyList_SetItem(python_val, index_count+2, point_double);
+		index_count += 3;
+    }
+    return python_val;
+}
+
+
+
 static PyGetSetDef Geometry_getsetters[] = {
     {"tetrahedron_points", (getter) tetrahedron_get_points, NULL, "Tetrahedron points", NULL},
 	{"tetrahedron_normals", (getter) tetrahedron_get_normals, NULL, "Tetrahedron normals", NULL},
+    {"quadcube_points", (getter) quadcube_get_points, NULL, "Quadcube points", NULL},
+	{"quadcube_normals", (getter) quadcube_get_normals, NULL, "Quadcube smooth normals", NULL},
     {NULL}  /* Sentinel */
 };
 
@@ -116,8 +162,21 @@ static PyObject *tetrahedron_sphere(PyGeometryInterface *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+static PyObject *quadcube_sphere(PyGeometryInterface *self, PyObject *args)
+{
+	const int face_divisions;
+
+	if (!PyArg_ParseTuple(args, "i", &face_divisions))
+		return NULL;
+
+    createCube(face_divisions, &self->cube);
+
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef Geometry_methods[] = {
 	{"tetrahedron_sphere", (PyCFunction) tetrahedron_sphere, METH_VARARGS, "Generate a sphere by tetrahedron subdivision."},
+	{"quadcube", (PyCFunction) quadcube_sphere, METH_VARARGS, "Generate a sphere from a quadcube"},
     {NULL, NULL, 0, NULL}
 };
 
