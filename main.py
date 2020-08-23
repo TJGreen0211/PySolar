@@ -24,6 +24,8 @@ from kivy.graphics import Fbo
 from kivy.graphics import Rectangle
 from kivy.graphics import opengl
 
+from shader import Shader
+
 sys.path.insert(1, os.getcwd()+'/bin')
 
 import waves
@@ -32,49 +34,15 @@ import camera
 
 #pylint: enable=wrong-import-position
 
-VERTEX_CODE = b"""
-    uniform mat4 projection;
-    uniform mat4 view;
-    uniform mat4 model;
-    layout(location = 0) in vec3 a_position;
+with open("shaders/shader.frag", 'r') as f:
+    FRAGMENT_CODE = f.read().encode()
 
-    layout(location = 0) out vec4 v_color;
-    void main()
-    {
-        mat4 aMat4 = mat4(1.0, 0.0, 0.0, 0.0,
-                  0.0, 1.0, 0.0, 0.0,
-                  0.0, 0.0, 1.0, 0.0,
-                  0.0, 0.0, 0.0, 1.0);
-        gl_Position = vec4(a_position, 1.0)*model*view*projection;
-        v_color = (vec4(a_position, 1.0)+1.0)/2.0;
-    } """
-
-
-
-FRAGMENT_CODE = b"""
-    layout(location = 0) in vec4 v_color;
-    void main()
-    {
-        gl_FragColor = v_color;
-    } """
-
-
-#def createShader(vertPath, fragPath, tchsPath=None, teshPath=None, geomPath=None):
-#	vert = loadShaderString(vertPath)
-#	vertId = loadShader(vert, GL_VERTEX_SHADER)
-#
-#	frag = loadShaderString(fragPath)
-#	fragId = loadShader(frag, GL_FRAGMENT_SHADER)
-#
-#	return LinkShader(fragID, vertID)
 
 
 DATA = np.array([-0.5, -0.5, 0.5,
                  0.5, -0.5, 0.5,
                  0.5, 0.5, 0.5,
                  -0.5, 0.5, 0.5], dtype=np.float32)
-
-
 
 INDEX = np.array([0, 1, 2, 2, 3, 0], dtype=np.uint32)
 
@@ -154,22 +122,21 @@ class Application(Widget):
         self.kvfbo.release()
 
     def setup_glfbo(self):
-        self.program = opengl.glCreateProgram()
+        self.light_shader = Shader()
 
-        vertex = opengl.glCreateShader(opengl.GL_VERTEX_SHADER)
-        fragment = opengl.glCreateShader(opengl.GL_FRAGMENT_SHADER)
-        opengl.glShaderSource(vertex, VERTEX_CODE)
-        opengl.glShaderSource(fragment, FRAGMENT_CODE)
-        opengl.glCompileShader(vertex)
-        opengl.glCompileShader(fragment)
+        vertex = self.light_shader.create_shader("shaders/shader.vert", opengl.GL_VERTEX_SHADER)
+        fragment = self.light_shader.create_shader("shaders/shader.frag", opengl.GL_FRAGMENT_SHADER)
 
-        opengl.glAttachShader(self.program, vertex)
-        opengl.glAttachShader(self.program, fragment)
-        opengl.glLinkProgram(self.program)
-        opengl.glDetachShader(self.program, vertex)
-        opengl.glDetachShader(self.program, fragment)
+        opengl.glAttachShader(self.light_shader.get_program(), vertex)
+        opengl.glAttachShader(self.light_shader.get_program(), fragment)
+        opengl.glLinkProgram(self.light_shader.get_program())
+        opengl.glDetachShader(self.light_shader.get_program(), vertex)
+        opengl.glDetachShader(self.light_shader.get_program(), fragment)
+
+        self.program = self.light_shader.get_program()
+        
         opengl.glUseProgram(self.program)
-
+        
         self.w, self.h = Window.width, Window.height
         opengl.glEnable(opengl.GL_TEXTURE_2D)
         (self.glfboid,) = opengl.glGenFramebuffers(1)
@@ -212,30 +179,32 @@ class Application(Widget):
         opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, 0)
 
     def draw_fbo(self, targetfbo):
-        eye = np.matrix([[np.cos(self.angle), -np.sin(self.angle), 0, 0],
-                         [np.sin(self.angle), np.cos(self.angle), 0, 0],
-                         [0, 0, 1, 0],
+        model = np.matrix([[1, 0, 0, 0],
+                         [0, 1, 0, 0],
+                         [0, 0, 1, 2],
                          [0, 0, 0, 1]], dtype=np.float32)
+                         
 
         perspective_arr = np.array(self.perspective_matrix, dtype=np.float32).reshape(4, 4)
         view_arr = np.array(self.arcball_camera.view_matrix, dtype=np.float32).reshape(4, 4)
-        model_arr = np.array(self.arcball_camera.view_translation, dtype=np.float32).reshape(4, 4)
+        #model_arr = np.array(self.arcball_camera.view_translation, dtype=np.float32).reshape(4, 4)
+        model_arr = np.array(model, dtype=np.float32).reshape(4, 4)
         #model_arr = np.identity(4, dtype=np.float32)
 
         self.frame_count += 1
         if self.frame_count %60 == 0:
-            print("\n FRAME: {}".format(self.frame_count))
-            print(self.arcball_camera.view_matrix)
-            print(self.arcball_camera.view_rotation)
-            print(self.arcball_camera.view_translation)
+        #    print("\n FRAME: {}".format(self.frame_count))
+        #    print(self.arcball_camera.view_matrix)
+        #    print(self.arcball_camera.view_rotation)
+        #    print(self.arcball_camera.view_translation)
             print(self.arcball_camera.position)
-            print(self.arcball_camera.rotation)
-            print(self.arcball_camera.yaw)
-            print(self.arcball_camera.pitch)
-            print(self.arcball_camera.movement_speed)
-            print(self.arcball_camera.max_speed)
-            print(self.arcball_camera.mouse_sensitivity)
-            print(self.arcball_camera.mouse_zoom)
+        #    print(self.arcball_camera.rotation)
+        #    print(self.arcball_camera.yaw)
+        #    print(self.arcball_camera.pitch)
+        #    print(self.arcball_camera.movement_speed)
+        #    print(self.arcball_camera.max_speed)
+        #    print(self.arcball_camera.mouse_sensitivity)
+        #    print(self.arcball_camera.mouse_zoom)
 
         opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, targetfbo)
         opengl.glClear(opengl.GL_COLOR_BUFFER_BIT)
@@ -267,6 +236,9 @@ class Application(Widget):
         #opengl.glVertexAttribPointer(0, 3, opengl.GL_FLOAT, opengl.GL_FALSE, 3*sys.getsizeof(data.points[0]), ctypes.c_void_p(0))
 
         opengl.glViewport(0, 0, self.w, self.h)
+        opengl.glEnable(opengl.GL_CULL_FACE)
+        opengl.glCullFace(opengl.GL_BACK);  
+
         #opengl.glDrawElements(opengl.GL_TRIANGLES, 6, opengl.GL_UNSIGNED_INT, 0)
         opengl.glDrawArrays(opengl.GL_TRIANGLES, 0, len(self.sphere))
         opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, 0)
@@ -278,6 +250,7 @@ class Application(Widget):
 
         #glViewport(0, 0, width, height)
         opengl.glEnable(opengl.GL_DEPTH_TEST)
+        #opengl.glDisable(opengl.GL_CULL_FACE)
         opengl.glClearColor(0.5, 0.5, 0.5, 1.0)
         opengl.glClear(opengl.GL_COLOR_BUFFER_BIT | opengl.GL_DEPTH_BUFFER_BIT)
 
@@ -286,9 +259,6 @@ class Application(Widget):
         #bindTextureAttachment(dz_texture, dz_texture_data, dim, dim)
 
         #print(dy_texture_data)
-
-    def loadDLL(self, path):
-        return ctypes.CDLL(path)
 
 class MainApp(App):
     cwd = os.getcwd()

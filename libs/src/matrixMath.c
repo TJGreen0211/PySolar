@@ -677,6 +677,17 @@ DLL_EXPORT mat4 mat4Ortho(double left, double right, double bottom, double top, 
 
 DLL_EXPORT mat4 mat4LookAt(vec3 eye, vec3 at, vec3 up)
 {
+	//def lookAt(self, center, target, up):
+    //f = (target - center); f = f/np.linalg.norm(f)
+    //s = np.cross(f, up); s = s/np.linalg.norm(s)
+    //u = np.cross(s, f); u = u/np.linalg.norm(u)
+	//
+    //m = np.zeros((4, 4))
+    //m[0, :-1] = s
+    //m[1, :-1] = u
+    //m[2, :-1] = -f
+    //m[-1, -1] = 1.0
+    
 	vec3 umv = {{eye.v[0] - at.v[0], eye.v[1] - at.v[1], eye.v[2] - at.v[2]}};
 	vec3 n = vec3Normalize(umv);
 	vec3 u = vec3Normalize(crossProduct(up, n));

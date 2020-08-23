@@ -46,16 +46,18 @@ static int Camera_init(PyCameraInterface *self, PyObject *args, PyObject *kwds) 
 	//static char *kwlist[] = {"dimension", NULL};
 
 	vec3 init_zero = {{0.0, 0.0, 0.0}};
+	vec3 init_right = {{1.0, 0.0, 0.0}};
+	vec3 init_front = {{0.0, 1.0, 0.0}};
 	vec3 init_up = {{0.0, 0.0, 1.0}};
-	vec3 init_position = {{0.0, 0.0, 1.0}};
+	vec3 init_position = {{0.0, 0.0, 0.0}};
 	mat4 init_identity = mat4IdentityMatrix();
 	self->camera.translation_matrix = init_identity;
 	self->camera.rotation_matrix = init_identity;
-	self->camera.rotation = init_zero;
+	self->camera.rotation = init_up;
 	self->camera.position = init_zero;
 	self->camera.up = init_up;
-	self->camera.front = init_up;
-	self->camera.right = init_zero;
+	self->camera.front = init_front;
+	self->camera.right = init_right;
 	self->camera.position = init_position;
 	self->camera_view_matrix = init_identity;
 	vec4 init_zero4 = {{0.0, 0.0, 0.0, 1.0}};
@@ -63,11 +65,11 @@ static int Camera_init(PyCameraInterface *self, PyObject *args, PyObject *kwds) 
 
 	self->camera.yaw = -90.0;
 	self->camera.pitch =0.0;
-	self->camera.movement_speed = 0.1;
+	self->camera.movement_speed = 1.1;
 	self->camera.max_speed = 2000.0;
 	self->camera.mouse_sensitivity = 0.6;
 	self->camera.mouse_zoom = 1.0;
-
+	
 	return 0;
 }
 

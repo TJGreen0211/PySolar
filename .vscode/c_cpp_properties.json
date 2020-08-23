@@ -4,10 +4,10 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/PyGL/libs/src/*",
-                "${workspaceFolder}/PyGL/*",
-                "${workspaceFolder}/PyGL/bin",
-                "C:/Users/TJ/AppData/Local/Programs/Python/Python37/include"
+                "${workspaceFolder}/libs/src/*",
+                "${workspaceFolder}/*",
+                "${workspaceFolder}/bin",
+                "C:/Users/wonde/AppData/Local/Programs/Python/Python37/include"
             ],
             "defines": [
                 "_DEBUG",
@@ -15,7 +15,7 @@
                 "_UNICODE"
             ],
             "windowsSdkVersion": "10.0.17763.0",
-            "compilerPath": "C:/Program Files/mingw-w64/x86_64-8.1.0-win32-seh-rt_v6-rev0/mingw64/bin/gcc.exe",
+            "compilerPath": "C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/gcc.exe",
             "cppStandard": "c++17"
         }
     ],
