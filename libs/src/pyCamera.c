@@ -211,6 +211,7 @@ static PyObject *get_camera_position(PyCameraInterface *self, PyObject *args)
 	};
 
 	vec4 ret = getCameraPosition(self->camera, position_matrix);
+	//printf("%f, %f, %f, %f\n", ret.v[0], ret.v[1], ret.v[2], ret.v[3]);
 
     return  Py_BuildValue("[d,d,d,d]", ret.v[0], ret.v[1], ret.v[2], ret.v[3]);
 }

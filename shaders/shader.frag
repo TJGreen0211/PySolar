@@ -27,5 +27,5 @@ void main()
 
 	//FragColor = vec4(ambient+diffuse+specular, 1.0);
 
-    gl_FragColor = vec4(ambient+diffuse+specular, 1.0);;
+    gl_FragColor = vec4(ambient+diffuse+specular, 1.0);
 }

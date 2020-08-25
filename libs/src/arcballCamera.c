@@ -29,7 +29,7 @@ mat4 getViewMatrix(ArcCamera *camera)
 	
 	//vec3 d = {{camera->rotation.v[0] - camera->front.v[0], camera->rotation.v[1] - camera->front.v[1], camera->rotation.v[2] - camera->front.v[2]}};
 	//vec3 d = {{camera->rotation.v[0] - 0.0, camera->rotation.v[1] - 0.0, camera->rotation.v[2] - 0.0}};
-	vec3 d = {{0.0, 0.0, 0.0}};
+	vec3 d = {{camera->front.v[0] - 0.0, camera->front.v[1] - 0.0, camera->front.v[2] - 0.0}};
 	d = vec3Normalize(d);
 	arc_yaw = asin(-d.v[1]) * rad;
 	arc_pitch = atan2(d.v[0], -d.v[2]) * rad;
