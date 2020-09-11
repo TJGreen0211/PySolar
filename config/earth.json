@@ -1,0 +1,40 @@
+{
+    "name": "earth",
+    "semiMajorAxis": 149023598,
+    "orbitalPeriod": 1.0,
+    "orbitalSpeed": 29.78,
+    "radius": 6371.0,
+    "siderealRotation": 1.0,
+    "axialTilt": 23.4392811,
+    "hasAtmosphere": true,
+    "atmosphere": {
+        "radius": 480,
+        "gravity": 9.80665,
+        "C_R": [0.3, 0.7, 1.0],
+        "K_R": 0.166,
+        "K_M": 0.0025,
+        "G_M": -0.85,
+        "E": 14.3
+    },
+    "textures": {
+        "textureMap": "resources/textures/earth_day.jpg",
+        "normalMap": "resources/textures/2k_earth_normal_map.tif",
+        "specularMap": "resources/textures/2k_earth_specular_map.tif"
+    },
+    "moons": [
+       {
+           "name": "moon",
+           "semiMajorAxis": 384399,
+           "orbitalSpeed": 1.022,
+           "orbitalPeriod": 27.321661,
+           "radius": 1737.4,
+           "siderealRotation": 27.321661,
+           "axialTilt": 1.5424,
+           "textures": {
+                "textureMap": "resources/textures/moon.jpg",
+                "normalMap": "",
+                "specularMap": ""
+            }
+       }
+    ]
+}

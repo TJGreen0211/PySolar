@@ -1,0 +1,25 @@
+{
+    "name": "venus",
+    "semiMajorAxis": 108208000,
+    "orbitalPeriod": 224.701,
+    "orbitalSpeed": 35.02,
+    "radius": 6051.8,
+    "siderealRotation": -243.025,
+    "axialTilt": 2.64,
+    "hasAtmosphere": true,
+    "atmosphere": {
+        "radius": 250.0,
+        "gravity": 3.72076,
+        "C_R": [0.7, 0.7, 0.5],
+        "K_R": 0.4166,
+        "K_M": 0.025,
+        "G_M": -0.35,
+        "E": 14.3
+    },
+    "textures": {
+        "textureMap": "resources/textures/2k_venus_surface.jpg",
+        "normalMap": "",
+        "specularMap": ""
+    },
+    "moons": []
+}

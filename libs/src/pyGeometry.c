@@ -126,6 +126,22 @@ static PyObject *quadcube_get_normals(PyGeometryInterface *self, void *closure)
     return python_val;
 }
 
+static PyObject *quadcube_get_tangents(PyGeometryInterface *self, void *closure)
+{
+	PyObject* python_val = PyList_New(self->cube.vertexNumber*3);
+	int index_count = 0;
+	for (int i = 0; i < self->cube.vertexNumber; i++)
+    {
+        PyObject* point_double = Py_BuildValue("d", self->cube.tangents[i].v[0]);
+        PyList_SetItem(python_val, index_count, point_double);
+		point_double = Py_BuildValue("d", self->cube.tangents[i].v[1]);
+        PyList_SetItem(python_val, index_count+1, point_double);
+		point_double = Py_BuildValue("d", self->cube.tangents[i].v[2]);
+        PyList_SetItem(python_val, index_count+2, point_double);
+		index_count += 3;
+    }
+    return python_val;
+}
 
 
 static PyGetSetDef Geometry_getsetters[] = {
@@ -133,6 +149,7 @@ static PyGetSetDef Geometry_getsetters[] = {
 	{"tetrahedron_normals", (getter) tetrahedron_get_normals, NULL, "Tetrahedron normals", NULL},
     {"quadcube_points", (getter) quadcube_get_points, NULL, "Quadcube points", NULL},
 	{"quadcube_normals", (getter) quadcube_get_normals, NULL, "Quadcube smooth normals", NULL},
+	{"quadcube_tangents", (getter) quadcube_get_tangents, NULL, "Quadcube tangents for TBN calculation", NULL},
     {NULL}  /* Sentinel */
 };
 

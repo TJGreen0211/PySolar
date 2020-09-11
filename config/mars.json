@@ -1,0 +1,54 @@
+{
+    "name": "mars",
+    "semiMajorAxis": 227939200,
+    "orbitalPeriod": 686.971,
+    "orbitalSpeed": 24.007,
+    "radius": 3389.5,
+    "siderealRotation": 1.025957,
+    "axialTilt": 25.19,
+    "hasAtmosphere": true,
+    "atmosphere": {
+        "radius": 100.8,
+        "gravity": 9.80665,
+        "C_R": [0.9, 0.7, 1.0],
+        "K_R": 0.0166,
+        "K_M": 0.00025,
+        "G_M": -0.35,
+        "E": 4.3
+    },
+    "moons": [
+        {
+            "name": "phobos",
+            "semiMajorAxis": 9376,
+            "orbitalSpeed": 2.138,
+            "orbitalPeriod": 0.3189102,
+            "radius": 110.2667,
+            "siderealRotation": 0,
+            "axialTilt": 0,
+            "textures": {
+                "textureMap": "resources/textures/phobos.jpg",
+                "normalMap": "",
+                "specularMap": ""
+            }
+        },
+        {
+            "name": "deimos",
+            "semiMajorAxis": 23463.2,
+            "orbitalSpeed": 1.3513,
+            "orbitalPeriod": 1.263,
+            "radius": 60.2,
+            "siderealRotation": 0,
+            "axialTilt": 0,
+            "textures": {
+                "textureMap": "resources/textures/deimos.jpg",
+                "normalMap": "",
+                "specularMap": ""
+            }
+        }
+    ],
+    "textures": {
+        "textureMap": "resources/textures/2k_mars.jpg",
+        "normalMap": "",
+        "specularMap": ""
+    }
+}

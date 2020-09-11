@@ -1,0 +1,80 @@
+{
+    "name": "jupiter",
+    "semiMajorAxis": 778570000,
+    "orbitalPeriod": 4332.59,
+    "orbitalSpeed": 13.07,
+    "radius": 69911,
+    "siderealRotation": 9.925,
+    "axialTilt": 3.13,
+    "hasAtmosphere": false,
+    "atmosphereRadius": 480,
+    "moons": [
+        {
+            "name": "io",
+            "semiMajorAxis": 421700,
+            "orbitalSpeed": 1.022,
+            "orbitalPeriod": 1.77,
+            "radius": 1821.5,
+            "siderealRotation": 1.77,
+            "axialTilt": 0,
+            "textures": {
+                "textureMap": "",
+                "normalMap": "",
+                "specularMap": ""
+            }
+        },
+        {
+            "name": "europa",
+            "semiMajorAxis": 671034,
+            "orbitalSpeed": 1.022,
+            "orbitalPeriod": 3.55,
+            "radius": 1561,
+            "siderealRotation": 3.55,
+            "axialTilt": 0,
+            "textures": {
+                "textureMap": "",
+                "normalMap": "",
+                "specularMap": ""
+            }
+        },
+        {
+            "name": "ganymede",
+            "semiMajorAxis": 1070412,
+            "orbitalSpeed": 1.022,
+            "orbitalPeriod": 7.15,
+            "radius": 2631,
+            "siderealRotation": 7.15,
+            "axialTilt": 0,
+            "textures": {
+                "textureMap": "",
+                "normalMap": "",
+                "specularMap": ""
+            }
+        },
+        {
+            "name": "callisto",
+            "semiMajorAxis": 1882709,
+            "orbitalSpeed": 1.022,
+            "orbitalPeriod": 16.69,
+            "radius": 2410.5,
+            "siderealRotation": 16.69,
+            "axialTilt": 0,
+            "textures": {
+                "textureMap": "",
+                "normalMap": "",
+                "specularMap": ""
+            }
+        }
+    ],
+    "characteristics": {
+        "gravity": 24.79,
+        "surfaceTemperature": 0,
+        "surfacePressure": 200,
+        "escapeVelocity": 59.5
+    },
+    "textures": {
+        "textureMap": "resources/textures/2k_jupiter.jpg",
+        "normalMap": "",
+        "specularMap": ""
+    }
+}

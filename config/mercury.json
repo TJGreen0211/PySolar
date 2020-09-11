@@ -1,0 +1,25 @@
+{
+    "name": "mercury",
+    "semiMajorAxis": 57909050,
+    "orbitalPeriod": 87.9691,
+    "orbitalSpeed": 47.362,
+    "radius": 2439.7,
+    "siderealRotation": 58.646,
+    "axialTilt": 2.04,
+    "hasAtmosphere": false,
+    "atmosphere": {
+        "radius": 0,
+        "gravity": 3.7,
+        "C_R": [0.3, 0.7, 1.0],
+        "K_R": 0.166,
+        "K_M": 0.0025,
+        "G_M": -0.85,
+        "E": 14.3
+    },
+    "textures": {
+        "textureMap": "resources/textures/2k_mercury.jpg",
+        "normalMap": "",
+        "specularMap": ""
+    },
+    "moons": []
+ }

@@ -63,9 +63,9 @@ static int Camera_init(PyCameraInterface *self, PyObject *args, PyObject *kwds) 
 	vec4 init_zero4 = {{0.0, 0.0, 0.0, 1.0}};
 	self->camera_model_view_position = init_zero4;
 
-	self->camera.yaw = -0.0;
+	self->camera.yaw = -90.0;
 	self->camera.pitch =0.0;
-	self->camera.movement_speed = 5.1;
+	self->camera.movement_speed = 1.1;
 	self->camera.max_speed = 2000.0;
 	self->camera.mouse_sensitivity = 0.6;
 	self->camera.mouse_zoom = 1.0;

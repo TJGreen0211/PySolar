@@ -1,0 +1,23 @@
+{
+    "name": "saturn",
+    "semiMajorAxis": 143353000000,
+    "orbitalPeriod": 10759.22,
+    "orbitalSpeed": 9.68,
+    "radius": 58232,
+    "siderealRotation": 10.5605,
+    "axialTilt": 26.73,
+    "hasAtmosphere": true,
+    "atmosphereRadius": 480,
+    "moons": [],
+    "characteristics": {
+        "gravity": 10.44,
+        "surfaceTemperature": 0.0,
+        "surfacePressure": 140.0,
+        "escapeVelocity": 35.5
+    },
+    "textures": {
+        "textureMap": "resources/textures/2k_saturn.jpg",
+        "normalMap": "",
+        "specularMap": ""
+    }
+ }

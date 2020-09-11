@@ -60,6 +60,33 @@ void generateSmoothNormals(quadCube *qc) {
 	free(vna);
 }
 
+void generate_tangents(quadCube *qc) {
+	vec3 edge1, edge2, delta_uv1, delta_uv2;
+	qc->tangents = malloc(qc->vertexNumber*sizeof(vec3));
+
+	for(int i = 0; i < qc->vertexNumber; i+=3) {
+		edge1.v[0] = qc->points[i+1].v[0] - qc->points[i].v[0];
+		edge1.v[1] = qc->points[i+1].v[1] - qc->points[i].v[1];
+		edge1.v[2] = qc->points[i+1].v[2] - qc->points[i].v[2];
+		edge2.v[0] = qc->points[i+2].v[0] - qc->points[i].v[0];
+		edge2.v[1] = qc->points[i+2].v[1] - qc->points[i].v[1];
+		edge2.v[2] = qc->points[i+2].v[2] - qc->points[i].v[2];
+
+		delta_uv1.v[0] = qc->points[i+1].v[0] - qc->points[i].v[0];
+		delta_uv1.v[1] = qc->points[i+1].v[1] - qc->points[i].v[1];
+		delta_uv2.v[0] = qc->points[i+2].v[0] - qc->points[i].v[0];
+		delta_uv2.v[1] = qc->points[i+2].v[1] - qc->points[i].v[1];
+
+		float f = 1.0 / (delta_uv1.v[0] * delta_uv2.v[1] - delta_uv2.v[0] * delta_uv1.v[1]);
+		qc->tangents[i].v[0] = f  * (delta_uv2.v[1] * edge1.v[0] - delta_uv1.v[1] * edge2.v[0]);
+		qc->tangents[i].v[1] = f  * (delta_uv2.v[1] * edge1.v[1] - delta_uv1.v[1] * edge2.v[1]);
+		qc->tangents[i].v[2] = f  * (delta_uv2.v[1] * edge1.v[2] - delta_uv1.v[1] * edge2.v[2]);
+		qc->tangents[i] = vec3Normalize(qc->tangents[i]);
+		for(int j = i; j < i+3; j++)
+			qc->tangents[j] = qc->tangents[i];
+	}
+}
+
 void createCube(int divisions, quadCube *newQuadCube) {
 	/*
 	a,b,c,d,e,f,g,h
@@ -119,6 +146,7 @@ void createCube(int divisions, quadCube *newQuadCube) {
 	}
 
 	generateSmoothNormals(newQuadCube);
+	generate_tangents(newQuadCube);
 }
 
 void deallocCube(quadCube *newQuadCube) {

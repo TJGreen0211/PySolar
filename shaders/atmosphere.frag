@@ -1,10 +1,11 @@
 #version 450
 
-uniform float time;
-uniform float E;
-uniform vec3 camPosition;
-uniform vec3 translation;
+uniform float E; // Sun brightness
+uniform float K_R; // Rayleigh constant > thicker
+uniform float K_M; // Mie constant > thicker
+uniform float G_M; // Gravity
 uniform vec3 C_R;
+uniform vec3 camPosition;
 uniform vec3 lightPosition;
 
 in vec4 fPosition;
@@ -19,11 +20,11 @@ const float degToRad = PI / 180.0;
 const float MAX = 10000.0;
 
 const float DEG_TO_RAD = PI / 180.0;
-float K_R = 0.166;//Rayleigh constant > thicker
-const float K_M = 0.0025;//Mie constant > thicker
+//float K_R = 0.166;
+//const float K_M = 0.0025;
 //const float E = 14.3;//Sun brightness
 //const vec3 C_R = vec3(0.3, 0.7, 1.0);
-const float G_M = -0.85;
+//const float G_M = -0.85;
 
 uniform float fInnerRadius;
 uniform float fOuterRadius;
@@ -35,17 +36,6 @@ const int numOutScatter = 5;
 const float fNumOutScatter = 5.0;
 const int numInScatter = 5;
 const float fNumInScatter = 5.0;
-
-mat3 rot3xy( vec2 angle ) {
-	vec2 c = cos( angle );
-	vec2 s = sin( angle );
-	
-	return mat3(
-		c.y      ,  0.0, -s.y,
-		s.y * s.x,  c.x,  c.y * s.x,
-		s.y * c.x, -s.x,  c.y * c.x
-	);
-}
 
 vec3 rayDirection(vec3 camPosition) {
 	vec4 ray = m*fPosition - vec4(camPosition, 1.0);
@@ -132,7 +122,6 @@ vec3 inScatter(vec3 o, vec3 dir, vec2 e, vec3 l) {
 
 void main (void)
 {
-	mat3 rot = rot3xy( vec2( 0.0, time/10.0) );
 	vec3 dir = rayDirection(camPosition);
 	vec3 eye = camPosition;
 	

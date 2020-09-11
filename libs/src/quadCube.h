@@ -13,6 +13,7 @@ typedef struct quadCube {
 	int vertexNumber;
     vec3 *points;
 	vec3 *normals;
+	vec3 *tangents;
 } quadCube;
 
 void createCube(int divisions, quadCube *newQuadCube);

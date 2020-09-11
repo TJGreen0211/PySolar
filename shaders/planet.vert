@@ -21,6 +21,8 @@ layout(location = 5) out vec3 fH;
 layout(location = 6) out vec3 f_position;
 layout(location = 7) out vec3 f_normal;
 layout(location = 8) out vec3 f_tangent;
+layout(location = 9) out vec3 fTV;
+layout(location = 10) out vec3 fTL;
 
 
 void main()
@@ -38,9 +40,17 @@ void main()
 	fL = -normalize(lightDir);
 	fH = -normalize((vec4(a_position, 1.0)*model - lightPos) + ray).xyz;
 
-    f_position = a_position;
+    vec3 T = normalize(normalMatrix * a_tangent);//normalize(vec3(vec4(a_tangent, 0.0) * model));
+	vec3 N = normalize(normalMatrix * a_normal);//normalize(vec3(vec4(a_normal, 0.0)) * normalMatrix);
+	T = normalize(T - dot(T, N) * N);
+	vec3 B = cross(N, T);
+    mat3 TBN = transpose(mat3(T, B, N));
+
+    f_position = TBN * a_position;
     f_normal = a_normal;
     f_tangent = a_tangent;
+    fTV = TBN * camera_position;
+    fTL = TBN * lightPosition;
 
     gl_Position = vec4(a_position, 1.0)*model*view*projection;
     

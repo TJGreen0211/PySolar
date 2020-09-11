@@ -11,6 +11,8 @@ layout(location = 2) in vec3 fE;
 layout(location = 3) in vec3 fN;
 layout(location = 4) in vec3 fL;
 layout(location = 5) in vec3 fH;
+layout(location = 9) in vec3 fTV;
+layout(location = 10) in vec3 fTL;
 
 uniform sampler2D texture1;
 uniform sampler2D normal_map;
@@ -64,7 +66,7 @@ void main()
 	}
 
     gl_FragColor = vec4(ambient+diffuse+specular, 1.0);
-	//gl_FragColor = vec4(fH, 1.0);
+	//gl_FragColor = vec4(normalize(fTV), 1.0);
 
 	////ambient
 	//vec3 color = texture(texture1, f_tex_coords).rgb;
