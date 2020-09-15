@@ -16,7 +16,7 @@ from kivy.app import App
 from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.uix.widget import Widget
-from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.modalview import ModalView
 from kivy.uix.popup import Popup
 from kivy.graphics import Fbo
@@ -26,6 +26,9 @@ from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
+from kivy.uix.checkbox import CheckBox
+from kivy.uix.slider import Slider
+from kivy.uix.progressbar import ProgressBar
 
 from shader import Shader
 from buffer import Buffer
@@ -58,10 +61,7 @@ class Application(Widget):
 
         opengl.glEnable(opengl.GL_CULL_FACE)
         opengl.glCullFace(opengl.GL_BACK)
-        opengl.glEnable(opengl.GL_DEPTH_TEST)
-        #opengl.glDepthMask(opengl.GL_FALSE)
-        opengl.glDepthFunc(opengl.GL_LESS)
-
+        
         #self.wave_patch = waves.Waves(dimension=128)
         #print(self.wave_patch.generate_waves(0.0))
         #dx_img_data = np.array(list(self.wave_patch.dx), np.uint8)
@@ -69,6 +69,7 @@ class Application(Widget):
         #self.dx_wave_texture = self.create_texture(dx_img_data)
 
         Clock.schedule_interval(self.update_glsl, 1.0 / 60.0)
+
 
     def _keyboard_closed(self):
         self._keyboard.unbind(on_key_down=self._on_keyboard_down)
@@ -175,10 +176,10 @@ class Application(Widget):
         self.screen_program = Shader("shaders/screen.vert", "shaders/screen.frag").get_program()
 
     def init_objects(self):
-        self.mercury = Planet("config/mercury.json")
-        self.venus = Planet("config/venus.json")
+        #self.mercury = Planet("config/mercury.json")
+        #self.venus = Planet("config/venus.json")
         self.earth = Planet("config/earth.json")
-        self.mars = Planet("config/mars.json")
+        #self.mars = Planet("config/mars.json")
         #self.jupiter = Planet("config/jupiter.json")
         #self.saturn = Planet("config/saturn.json")
 
@@ -190,21 +191,27 @@ class Application(Widget):
         opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, 0)
 
     def draw_fbo(self, targetfbo):
+        opengl.glEnable(opengl.GL_DEPTH_TEST)
+        #opengl.glDepthMask(opengl.GL_FALSE)
+        opengl.glDepthFunc(opengl.GL_LESS)
+
         opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, targetfbo)
-        #opengl.glClearColor(0.0, 1.0, 1.0, 1.0)
+        opengl.glClearColor(0.0, 1.0, 1.0, 1.0)
         opengl.glClear(opengl.GL_COLOR_BUFFER_BIT | opengl.GL_DEPTH_BUFFER_BIT)
 
         perspective_arr = np.array(self.perspective_matrix, dtype=np.float32).reshape(4, 4)
         view_arr = np.array(self.arcball_camera.view_matrix, dtype=np.float32).reshape(4, 4)
 
-        self.draw_planet(self.mercury, self.program, self.sphere_buffer, perspective_arr, view_arr)
-        self.draw_planet(self.venus, self.program, self.sphere_buffer, perspective_arr, view_arr)
+        #self.draw_planet(self.mercury, self.program, self.sphere_buffer, perspective_arr, view_arr)
+        #self.draw_planet(self.venus, self.program, self.sphere_buffer, perspective_arr, view_arr)
         self.draw_planet(self.earth, self.program, self.sphere_buffer, perspective_arr, view_arr)
-        self.draw_planet(self.mars, self.program, self.sphere_buffer, perspective_arr, view_arr)
+        #self.draw_planet(self.mars, self.program, self.sphere_buffer, perspective_arr, view_arr)
         #self.draw_planet(self.jupiter, self.program)
         #self.draw_planet(self.saturn, self.program)
         
         opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, 0)
+
+        opengl.glDisable(opengl.GL_DEPTH_TEST)
 
     def draw_planet(self, planet, shader_program, buffer_object, perspective_arr, view_arr):
         opengl.glUseProgram(shader_program)
@@ -288,7 +295,8 @@ class Application(Widget):
         opengl.glVertexAttribPointer(1, 3, opengl.GL_FLOAT, False, 12, self.atmosphere_buffer.point_nbytes)
         opengl.glDrawArrays(opengl.GL_TRIANGLES, 0, self.atmosphere_buffer.num_vertices)
 
-        opengl.glDisable(opengl.GL_BLEND)
+        opengl.glBlendFunc(opengl.GL_SRC_ALPHA, opengl.GL_ONE_MINUS_SRC_ALPHA)
+        #opengl.glDisable(opengl.GL_BLEND)
 
     """def draw_screen(self, model, shader_program):
         opengl.glUseProgram(shader_program)
@@ -325,20 +333,50 @@ class MainApp(App):
     cwd = os.getcwd()
     os.chdir(cwd)
 
-    def build(self):
-        #self.popup = Popup(title='Test popup', content=Label(text='Hello world'),
+    def onButtonPress(self, button):
+        print("asdf")
+        layout      = GridLayout(cols=1, padding=10)
+        popupLabel  = Label(text  = "Click for pop-up")
+        closeButton = Button(text = "Close the pop-up")
+        layout.add_widget(popupLabel)
+        layout.add_widget(closeButton)       
+        # Instantiate the modal popup and display
+        #self.popup = Popup(title='Test popup', content=Label(text='Hello world'), size_hint=(None, None), size=(200, 200),
         #      auto_dismiss=False)
         #self.popup.open()
+        popup = Popup(title='Demo Popup',
+                      content=layout)
+        popup.open()   
+        # Attach close button press with popup.dismiss action
+        closeButton.bind(on_press=popup.dismiss)  
 
-        view = ModalView(size_hint=(None, None), size=(200, 200))
-        view.add_widget(Label(text='Hello world'))
-
-        w = Application()
+    def build(self):
+        #root = GridLayout(cols=1, padding=10)
         root = BoxLayout(orientation='vertical')
-        #self.password = TextInput(password=True, multiline=False)
-        root.add_widget(view)
+        #self.button = Button(text="Click for pop-up")
+        #root.add_widget(self.button)
+
+        layout      = GridLayout(cols=1, padding=10)
+        popupLabel  = Label(text  = "Click for pop-up")
+        closeButton = Button(text = "Close the pop-up")
+        layout.add_widget(popupLabel)
+        layout.add_widget(closeButton)
+        popup = Popup(title='Demo Popup',size_hint=(None, None), size=(200, 400), pos_hint={'top':.97,'right':.97},
+                      content=layout, auto_dismiss=False)
+        popup.open()  
+        w = Application()
+
+        layout2 = BoxLayout(opacity=0.5)
+        #pb = ProgressBar(max=1000, size=(100, 100))
+        #pb.value = 750
+        #layout2.add_widget(pb)
+        #layout2.add_widget(Slider(value_track=True, value_track_color=[1, 0, 0, 1], size=(100, 100)))
+        #layout2.add_widget(Button(text='Test Button', size=(100, 100)))
         
-        root.add_widget(w)
+        # Draw the scene
+        layout2.add_widget(w)
+        root.add_widget(layout2)
+    
         return root
 
 if __name__ == "__main__":
