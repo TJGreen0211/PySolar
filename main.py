@@ -7,6 +7,7 @@ import math
 import ctypes
 import time
 import numpy as np
+from PIL import Image
 
 import kivy
 
@@ -76,7 +77,6 @@ class Application(Widget):
         self._keyboard = None
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
-        #delta_time = time.time() - self.application_start_time
         if keycode[1] == 'w':
             self.arcball_camera.process_keyboard(0, 0.1)
         elif keycode[1] == 's':
@@ -87,7 +87,10 @@ class Application(Widget):
             self.arcball_camera.process_keyboard(3, 0.1)
         return True
 
-    def on_touch_down(self, touch):
+    def on_touch_down(self, touch): 
+        if touch.button == 'left':
+            screen_position = list(touch.spos)
+            self.arcball_camera.process_mouse_movement(screen_position[0], screen_position[1], 1)
         if touch.is_mouse_scrolling:
             if touch.button == 'scrolldown':
                 self.arcball_camera.process_mouse_scroll(-0.01)
@@ -96,7 +99,6 @@ class Application(Widget):
 
 
     def on_touch_move(self, touch):
-        #print("Touch move", touch)
         screen_position = list(touch.spos)
         self.arcball_camera.process_mouse_movement(screen_position[0], screen_position[1], 0)
 
@@ -175,13 +177,58 @@ class Application(Widget):
         self.atmosphere_program = Shader("shaders/atmosphere.vert", "shaders/atmosphere.frag").get_program()
         self.screen_program = Shader("shaders/screen.vert", "shaders/screen.frag").get_program()
 
+        self.skybox_shader = Shader("shaders/skybox.vert", "shaders/skybox.frag").get_program()
+
     def init_objects(self):
+        self.skybox_texture = self.load_texture("resources/skybox/milkyway.jpg")
         #self.mercury = Planet("config/mercury.json")
         #self.venus = Planet("config/venus.json")
         self.earth = Planet("config/earth.json")
         #self.mars = Planet("config/mars.json")
         #self.jupiter = Planet("config/jupiter.json")
         #self.saturn = Planet("config/saturn.json")
+
+    def load_texture(self, path):
+        img = Image.open(path)
+        #img = Image.open("resources/textures/earth_day.jpg")
+        img_data = np.array(list(img.getdata()), np.uint8)
+        (texture,) = opengl.glGenTextures(1)
+        opengl.glBindTexture(opengl.GL_TEXTURE_2D, texture)
+        opengl.glTexParameteri(opengl.GL_TEXTURE_2D, opengl.GL_TEXTURE_WRAP_S, opengl.GL_REPEAT)
+        opengl.glTexParameteri(opengl.GL_TEXTURE_2D, opengl.GL_TEXTURE_WRAP_T, opengl.GL_REPEAT)
+        opengl.glTexParameteri(opengl.GL_TEXTURE_2D, opengl.GL_TEXTURE_MAG_FILTER, opengl.GL_LINEAR)
+        opengl.glTexParameteri(opengl.GL_TEXTURE_2D, opengl.GL_TEXTURE_MIN_FILTER, opengl.GL_LINEAR)
+        opengl.glTexImage2D(opengl.GL_TEXTURE_2D, 0, opengl.GL_RGB, img.width, img.height, 0, opengl.GL_RGB, opengl.GL_UNSIGNED_BYTE, img_data.tobytes())
+        opengl.glEnable(opengl.GL_TEXTURE_2D)
+        opengl.glBindTexture(opengl.GL_TEXTURE_2D, 0)
+
+        """GLuint loadCubemap(char **faces)
+        {
+        	GLuint textureID;
+            glGenTextures(1, &textureID);
+            glActiveTexture(GL_TEXTURE0);
+
+            int width, height;
+            unsigned char* image;
+
+            glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+            for (GLuint i = 0; i < 6; i++)
+            {
+                image = SOIL_load_image(faces[i], &width, &height, 0, SOIL_LOAD_RGB);
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+
+            }
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+            return textureID;
+        }"""
+
+        return texture
 
     def blit_fbo(self):
         opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, self.glfboid)
@@ -198,6 +245,8 @@ class Application(Widget):
         opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, targetfbo)
         opengl.glClearColor(0.0, 1.0, 1.0, 1.0)
         opengl.glClear(opengl.GL_COLOR_BUFFER_BIT | opengl.GL_DEPTH_BUFFER_BIT)
+
+        #self.draw_skybox()
 
         perspective_arr = np.array(self.perspective_matrix, dtype=np.float32).reshape(4, 4)
         view_arr = np.array(self.arcball_camera.view_matrix, dtype=np.float32).reshape(4, 4)
@@ -222,8 +271,8 @@ class Application(Widget):
         self.draw_sphere_object(planet.planet, shader_program, buffer_object, perspective_arr, view_arr)
         self.draw_moons(planet, shader_program, buffer_object, perspective_arr, view_arr)
 
-        if planet.planet['draw_atmosphere']:
-            self.draw_atmosphere(planet, self.atmosphere_program, perspective_arr, view_arr)
+        #if planet.planet['draw_atmosphere']:
+        #    self.draw_atmosphere(planet, self.atmosphere_program, perspective_arr, view_arr)
     
     def draw_moons(self, planet, shader_program, buffer_object, perspective_arr, view_arr):
         opengl.glBindBuffer(opengl.GL_ARRAY_BUFFER, buffer_object.vbo)
@@ -328,6 +377,32 @@ class Application(Widget):
         opengl.glVertexAttribPointer(1, 2, opengl.GL_FLOAT, False, 8, self.quad_vertices.nbytes)
         opengl.glDrawArrays(opengl.GL_TRIANGLES, 0, len(self.quad_vertices))"""
 
+    def draw_skybox(self):
+        opengl.glUseProgram(self.skybox_shader)
+        opengl.glDepthMask(opengl.GL_FALSE)
+        opengl.glDepthFunc(opengl.GL_LEQUAL)
+
+        opengl.glBindBuffer(opengl.GL_ARRAY_BUFFER, self.atmosphere_buffer.vbo)
+
+        perspective_arr = np.array(self.perspective_matrix, dtype=np.float32).reshape(4, 4)
+        view_arr = np.array(self.arcball_camera.view_matrix, dtype=np.float32).reshape(4, 4)
+        model_arr = np.identity(4)
+        opengl.glUniformMatrix4fv(opengl.glGetUniformLocation(self.skybox_shader, b"projection"), 1, False, np.array(perspective_arr).flatten().tobytes())
+        opengl.glUniformMatrix4fv(opengl.glGetUniformLocation(self.skybox_shader, b"view"), 1, False, view_arr.flatten().tobytes())
+
+        opengl.glActiveTexture(opengl.GL_TEXTURE1)
+        opengl.glBindTexture(opengl.GL_TEXTURE_2D, self.skybox_texture)
+        opengl.glUniform1i(opengl.glGetUniformLocation(self.skybox_shader, b"skybox"), 1)
+        opengl.glActiveTexture(opengl.GL_TEXTURE0)
+
+        opengl.glEnableVertexAttribArray(0)
+        opengl.glVertexAttribPointer(0, 3, opengl.GL_FLOAT, False, 12, 0)
+        opengl.glEnableVertexAttribArray(1)
+        opengl.glVertexAttribPointer(1, 3, opengl.GL_FLOAT, False, 12, self.atmosphere_buffer.point_nbytes)
+        opengl.glDrawArrays(opengl.GL_TRIANGLES, 0, self.atmosphere_buffer.num_vertices)
+
+        opengl.glDepthMask(opengl.GL_TRUE)
+
 
 class MainApp(App):
     cwd = os.getcwd()
@@ -335,20 +410,6 @@ class MainApp(App):
 
     def onButtonPress(self, button):
         print("asdf")
-        layout      = GridLayout(cols=1, padding=10)
-        popupLabel  = Label(text  = "Click for pop-up")
-        closeButton = Button(text = "Close the pop-up")
-        layout.add_widget(popupLabel)
-        layout.add_widget(closeButton)       
-        # Instantiate the modal popup and display
-        #self.popup = Popup(title='Test popup', content=Label(text='Hello world'), size_hint=(None, None), size=(200, 200),
-        #      auto_dismiss=False)
-        #self.popup.open()
-        popup = Popup(title='Demo Popup',
-                      content=layout)
-        popup.open()   
-        # Attach close button press with popup.dismiss action
-        closeButton.bind(on_press=popup.dismiss)  
 
     def build(self):
         #root = GridLayout(cols=1, padding=10)
@@ -359,6 +420,7 @@ class MainApp(App):
         layout      = GridLayout(cols=1, padding=10)
         popupLabel  = Label(text  = "Click for pop-up")
         closeButton = Button(text = "Close the pop-up")
+        layout.add_widget(Slider(value_track=True, value_track_color=[1, 0, 0, 1]))
         layout.add_widget(popupLabel)
         layout.add_widget(closeButton)
         popup = Popup(title='Demo Popup',size_hint=(None, None), size=(200, 400), pos_hint={'top':.97,'right':.97},
