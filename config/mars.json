@@ -26,7 +26,7 @@
             "siderealRotation": 0,
             "axialTilt": 0,
             "textures": {
-                "textureMap": "resources/textures/phobos.jpg",
+                "textureMap": "resources/textures/moons/phobos.jpg",
                 "normalMap": "",
                 "specularMap": ""
             }
@@ -40,7 +40,7 @@
             "siderealRotation": 0,
             "axialTilt": 0,
             "textures": {
-                "textureMap": "resources/textures/deimos.jpg",
+                "textureMap": "resources/textures/moons/deimos.jpg",
                 "normalMap": "",
                 "specularMap": ""
             }
@@ -48,7 +48,7 @@
     ],
     "textures": {
         "textureMap": "resources/textures/2k_mars.jpg",
-        "normalMap": "",
+        "normalMap": "resources/textures/mars_normal_map.jpg",
         "specularMap": ""
     }
 }

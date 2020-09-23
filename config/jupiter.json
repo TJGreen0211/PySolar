@@ -7,7 +7,8 @@
     "siderealRotation": 9.925,
     "axialTilt": 3.13,
     "hasAtmosphere": false,
-    "atmosphereRadius": 480,
+    "atmosphereRadius": 0,
+    "atmosphere": {},
     "moons": [
         {
             "name": "io",
@@ -18,7 +19,7 @@
             "siderealRotation": 1.77,
             "axialTilt": 0,
             "textures": {
-                "textureMap": "",
+                "textureMap": "resources/textures/moons/io.jpg",
                 "normalMap": "",
                 "specularMap": ""
             }
@@ -32,7 +33,7 @@
             "siderealRotation": 3.55,
             "axialTilt": 0,
             "textures": {
-                "textureMap": "",
+                "textureMap": "resources/textures/moons/europa.jpg",
                 "normalMap": "",
                 "specularMap": ""
             }
@@ -46,7 +47,7 @@
             "siderealRotation": 7.15,
             "axialTilt": 0,
             "textures": {
-                "textureMap": "",
+                "textureMap": "resources/textures/moons/ganymede.jpg",
                 "normalMap": "",
                 "specularMap": ""
             }
@@ -60,18 +61,12 @@
             "siderealRotation": 16.69,
             "axialTilt": 0,
             "textures": {
-                "textureMap": "",
+                "textureMap": "resources/textures/moons/callisto.jpg",
                 "normalMap": "",
                 "specularMap": ""
             }
         }
     ],
-    "characteristics": {
-        "gravity": 24.79,
-        "surfaceTemperature": 0,
-        "surfacePressure": 200,
-        "escapeVelocity": 59.5
-    },
     "textures": {
         "textureMap": "resources/textures/2k_jupiter.jpg",
         "normalMap": "",
