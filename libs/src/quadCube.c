@@ -63,6 +63,7 @@ void generateSmoothNormals(quadCube *qc) {
 void generate_tangents(quadCube *qc) {
 	vec3 edge1, edge2, delta_uv1, delta_uv2;
 	qc->tangents = malloc(qc->vertexNumber*sizeof(vec3));
+	vec3 *bitangents = malloc(qc->vertexNumber*sizeof(vec3));
 
 	for(int i = 0; i < qc->vertexNumber; i+=3) {
 		edge1.v[0] = qc->points[i+1].v[0] - qc->points[i].v[0];
@@ -82,9 +83,38 @@ void generate_tangents(quadCube *qc) {
 		qc->tangents[i].v[1] = f  * (delta_uv2.v[1] * edge1.v[1] - delta_uv1.v[1] * edge2.v[1]);
 		qc->tangents[i].v[2] = f  * (delta_uv2.v[1] * edge1.v[2] - delta_uv1.v[1] * edge2.v[2]);
 		qc->tangents[i] = vec3Normalize(qc->tangents[i]);
-		for(int j = i; j < i+3; j++)
+		for(int j = i; j < i+3; j++) {
 			qc->tangents[j] = qc->tangents[i];
+		}
+
+		bitangents[i].v[0] = f * (delta_uv2.v[0] * edge1.v[0] - delta_uv1.v[0] * edge2.v[0]);
+		bitangents[i].v[1] = f * (delta_uv2.v[0] * edge1.v[1] - delta_uv1.v[0] * edge2.v[1]);
+		bitangents[i].v[2] = f * (delta_uv2.v[0] * edge1.v[2] - delta_uv1.v[0] * edge2.v[2]);
+		bitangents[i] = vec3Normalize(bitangents[i]);
+
+		for(int j = i; j < i+3; j++)
+			bitangents[j] = bitangents[i];
 	}
+
+	for (int i = 0; i < qc->vertexNumber; i+=3)
+ 	{
+ 		vec3 n = qc->normals[i];
+ 		vec3 t = qc->tangents[i];
+		vec3 temp;
+
+ 		// Gram-Schmidt orthogonalize
+		double d = vec3Dot(n, t);
+		temp.v[0] = t.v[0] - n.v[0] * d;
+		temp.v[1] = t.v[1] - n.v[1] * d;
+		temp.v[2] = t.v[2] - n.v[2] * d;
+ 		qc->tangents[i] = vec3Normalize(temp);
+		qc->tangents[i+1] = qc->tangents[i];
+		qc->tangents[i+2] = qc->tangents[i];
+
+ 		// Calculate handedness
+ 		//tangent[a].w = (vec3Dot(crossProduct(n, t), bitangents[i]) < 0.0F) ? -1.0F : 1.0F;
+ 	}
+
 }
 
 void createCube(int divisions, quadCube *newQuadCube) {
@@ -145,7 +175,7 @@ void createCube(int divisions, quadCube *newQuadCube) {
 		newQuadCube->normals[i+2] = normal;
 	}
 
-	generateSmoothNormals(newQuadCube);
+	//generateSmoothNormals(newQuadCube);
 	generate_tangents(newQuadCube);
 }
 

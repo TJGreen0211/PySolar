@@ -19,8 +19,10 @@ class Planet(object):
         self.planet['moons'] = []
         self.init_moons(self.planet)
 
-        #if len(self.planet_params['textures']['normalMap']) > 0:
-        #    self.normal_map = self._load_texture(self.planet_params['textures']['normalMap'])
+        self.normal_map = None
+        if len(self.planet_params['textures']['normalMap']) > 0:
+            self.normal_map = self._load_texture(self.planet_params['textures']['normalMap'])
+        #self.specular_map = None
         #if len(self.planet_params['textures']['specularMap']) > 0:
         #    self.specular_map = self._load_texture(self.planet_params['textures']['specularMap'])
 
@@ -109,8 +111,91 @@ class Planet(object):
             moon['model'][0][3] = (self.planet['model'][0][3])+moon['semimajor_axis']*math.cos(time)
             moon['model'][2][3] = (self.planet['model'][2][3])+moon['semimajor_axis']*math.sin(time)
 
-    def draw_planet(self):
-        pass
+    def draw(self, arcball_camera, shader_program, buffer_object, perspective_arr, view_arr, atmosphere_program, atmosphere_buffer, time):
+        opengl.glUseProgram(shader_program)
+        #planet.update_planet_model(self.global_time/10.0)
+
+        opengl.glBindBuffer(opengl.GL_ARRAY_BUFFER, buffer_object.vbo)
+
+        self.draw_sphere_object(arcball_camera, self.planet, shader_program, buffer_object, perspective_arr, view_arr)
+        self.draw_moons(arcball_camera, shader_program, buffer_object, perspective_arr, view_arr, time)
+
+        #if self.planet['draw_atmosphere']:
+        #    self.draw_atmosphere(arcball_camera, atmosphere_program, atmosphere_buffer, perspective_arr, view_arr)
+    
+    def draw_moons(self, arcball_camera, shader_program, buffer_object, perspective_arr, view_arr, time):
+        opengl.glBindBuffer(opengl.GL_ARRAY_BUFFER, buffer_object.vbo)
+        self.update_moon_models(time)
+
+        for moon in self.planet['moons']:
+            self.draw_sphere_object(arcball_camera, moon, shader_program, buffer_object, perspective_arr, view_arr)
+
+    def draw_sphere_object(self, arcball_camera, object_dict, shader_program, buffer_object, perspective_arr, view_arr):
+        u_loc = opengl.glGetUniformLocation(shader_program, b"projection")
+        opengl.glUniformMatrix4fv(u_loc, 1, False, np.array(perspective_arr).flatten().tobytes())
+        view_loc = opengl.glGetUniformLocation(shader_program, b"view")
+        opengl.glUniformMatrix4fv(view_loc, 1, False, view_arr.flatten().tobytes())
+        model_loc = opengl.glGetUniformLocation(shader_program, b"model")
+        opengl.glUniformMatrix4fv(model_loc, 1, False, object_dict['model'].flatten().tobytes())
+
+        camera_position = arcball_camera.camera_model_view_position(list(object_dict['model'].flatten()))
+        opengl.glUniform3f(opengl.glGetUniformLocation(shader_program, b"camera_position"), camera_position[0], camera_position[1], camera_position[2])
+        opengl.glUniform3f(opengl.glGetUniformLocation(shader_program, b"lightPosition"),10.0, 5.0, -4.0)
+
+        opengl.glActiveTexture(opengl.GL_TEXTURE1)
+        opengl.glBindTexture(opengl.GL_TEXTURE_2D, object_dict['texture_map'])
+        opengl.glUniform1i(opengl.glGetUniformLocation(shader_program, b"texture1"), 1)
+        if self.normal_map != None:
+            opengl.glActiveTexture(opengl.GL_TEXTURE2)
+            opengl.glBindTexture(opengl.GL_TEXTURE_2D, self.normal_map)
+            opengl.glUniform1i(opengl.glGetUniformLocation(shader_program, b"normal_map"), 2)
+        #opengl.glActiveTexture(opengl.GL_TEXTURE3)
+        #opengl.glBindTexture(opengl.GL_TEXTURE_2D, planet.specular_map)
+        #opengl.glUniform1i(opengl.glGetUniformLocation(shader_program, b"specular_map"), 3)
+        opengl.glActiveTexture(opengl.GL_TEXTURE0)
+        
+        opengl.glEnableVertexAttribArray(0)
+        opengl.glVertexAttribPointer(0, 3, opengl.GL_FLOAT, False, 12, 0)
+        opengl.glEnableVertexAttribArray(1)
+        opengl.glVertexAttribPointer(1, 3, opengl.GL_FLOAT, False, 12, buffer_object.point_nbytes)
+        opengl.glEnableVertexAttribArray(2)
+        opengl.glVertexAttribPointer(2, 3, opengl.GL_FLOAT, False, 12, buffer_object.point_nbytes+buffer_object.tangent_nbytes)
+        opengl.glDrawArrays(opengl.GL_TRIANGLES, 0, buffer_object.num_vertices)
+
+    def draw_atmosphere(self, arcball_camera, shader_program, buffer, perspective_arr, view_arr):
+        opengl.glEnable(opengl.GL_BLEND)
+        opengl.glBlendFunc(opengl.GL_ONE, opengl.GL_ONE)
+        opengl.glUseProgram(shader_program)
+
+        #model_arr = np.array(self.arcball_camera.view_translation, dtype=np.float32).reshape(4, 4)
+        #model_arr = np.array(model, dtype=np.float32).reshape(4, 4)
+        opengl.glBindBuffer(opengl.GL_ARRAY_BUFFER, buffer.vbo)
+
+        opengl.glUniformMatrix4fv(opengl.glGetUniformLocation(shader_program, b"projection"), 1, False, np.array(perspective_arr).flatten().tobytes())
+        opengl.glUniformMatrix4fv(opengl.glGetUniformLocation(shader_program, b"view"), 1, False, view_arr.flatten().tobytes())
+        opengl.glUniformMatrix4fv(opengl.glGetUniformLocation(shader_program, b"model"), 1, False, self.planet['atmosphere']['model'].flatten().tobytes())
+
+        # Atmosphere constants
+        opengl.glUniform1f(opengl.glGetUniformLocation(shader_program, b"fInnerRadius"), self.planet['scale'])
+        opengl.glUniform1f(opengl.glGetUniformLocation(shader_program, b"fOuterRadius"), self.planet['atmosphere']['radius'])
+        opengl.glUniform3f(opengl.glGetUniformLocation(shader_program, b"C_R"), self.planet['atmosphere']['C_R'][0], self.planet['atmosphere']['C_R'][1], self.planet['atmosphere']['C_R'][2])
+        opengl.glUniform1f(opengl.glGetUniformLocation(shader_program, b"K_R"), self.planet['atmosphere']['K_R'])
+        opengl.glUniform1f(opengl.glGetUniformLocation(shader_program, b"K_M"), self.planet['atmosphere']['K_M'])
+        opengl.glUniform1f(opengl.glGetUniformLocation(shader_program, b"G_M"), self.planet['atmosphere']['G_M'])
+        opengl.glUniform1f(opengl.glGetUniformLocation(shader_program, b"E"), self.planet['atmosphere']['E'])
+        
+        camera_position = arcball_camera.camera_model_view_position(list(self.planet['atmosphere']['model'].flatten()))
+        opengl.glUniform3f(opengl.glGetUniformLocation(shader_program, b"camPosition"), camera_position[0], camera_position[1], camera_position[2])
+        opengl.glUniform3f(opengl.glGetUniformLocation(shader_program, b"lightPosition"), 10.0, 5.0, -4.0)
+
+        opengl.glEnableVertexAttribArray(0)
+        opengl.glVertexAttribPointer(0, 3, opengl.GL_FLOAT, False, 12, 0)
+        opengl.glEnableVertexAttribArray(1)
+        opengl.glVertexAttribPointer(1, 3, opengl.GL_FLOAT, False, 12, buffer.point_nbytes)
+        opengl.glDrawArrays(opengl.GL_TRIANGLES, 0, buffer.num_vertices)
+
+        opengl.glBlendFunc(opengl.GL_SRC_ALPHA, opengl.GL_ONE_MINUS_SRC_ALPHA)
+        #opengl.glDisable(opengl.GL_BLEND)
 
     def _load_texture(self, path):
         img = Image.open(path)

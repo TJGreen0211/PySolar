@@ -30,6 +30,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.slider import Slider
 from kivy.uix.progressbar import ProgressBar
+from kivy.uix.treeview import TreeView, TreeViewLabel
 
 from shader import Shader
 from buffer import Buffer
@@ -52,6 +53,7 @@ class Application(Widget):
         self.setup_glfbo()
         self.init_objects()
         self.init_shaders()
+        self.setup_depthbuffer()
 
         self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
         self._keyboard.bind(on_key_down=self._on_keyboard_down)
@@ -102,9 +104,6 @@ class Application(Widget):
         screen_position = list(touch.spos)
         self.arcball_camera.process_mouse_movement(screen_position[0], screen_position[1], 0)
 
-    #def on_touch_up(self, touch):
-    #    print("Touch Release", touch)
-
     def update_glsl(self, *largs):
         self.angle += 0.01
         self.draw_fbo(self.glfboid)
@@ -120,18 +119,69 @@ class Application(Widget):
         (self.kvfboid,) = opengl.glGetIntegerv(opengl.GL_FRAMEBUFFER_BINDING)
         self.kvfbo.release()
 
-    def create_texture(self, img_data):
+    def create_depth_texture(self, sizex, sizey):
         (texture,) = opengl.glGenTextures(1)
         opengl.glBindTexture(opengl.GL_TEXTURE_2D, texture)
-        opengl.glTexParameteri(opengl.GL_TEXTURE_2D, opengl.GL_TEXTURE_WRAP_S, opengl.GL_REPEAT)
-        opengl.glTexParameteri(opengl.GL_TEXTURE_2D, opengl.GL_TEXTURE_WRAP_T, opengl.GL_REPEAT)
+        opengl.glTexParameteri(opengl.GL_TEXTURE_2D, opengl.GL_TEXTURE_WRAP_S, opengl.GL_NEAREST)
+        opengl.glTexParameteri(opengl.GL_TEXTURE_2D, opengl.GL_TEXTURE_WRAP_T, opengl.GL_NEAREST)
         opengl.glTexParameteri(opengl.GL_TEXTURE_2D, opengl.GL_TEXTURE_MAG_FILTER, opengl.GL_LINEAR)
         opengl.glTexParameteri(opengl.GL_TEXTURE_2D, opengl.GL_TEXTURE_MIN_FILTER, opengl.GL_LINEAR)
-        opengl.glTexImage2D(opengl.GL_TEXTURE_2D, 0, opengl.GL_RGB, 128, 128, 0, opengl.GL_RGB, opengl.GL_UNSIGNED_BYTE, img_data.tobytes())
-        opengl.glEnable(opengl.GL_TEXTURE_2D)
+        #opengl.glTexImage2D(opengl.GL_TEXTURE_2D, 0, opengl.GL_DEPTH_COMPONENT, sizex, sizey, 0, opengl.GL_DEPTH_COMPONENT, opengl.GL_FLOAT, bytes([0]))
+        #opengl.glEnable(opengl.GL_TEXTURE_2D)
         opengl.glBindTexture(opengl.GL_TEXTURE_2D, 0)
 
         return texture
+
+        """ GLuint generateTextureAttachment(int depth, int stencil, int sizex, int sizey) {
+        GLuint textureID;
+        GLenum attachment_type;
+        if(!depth && !stencil)
+            attachment_type = GL_RGB;
+        else if(depth && !stencil)
+            attachment_type = GL_DEPTH_COMPONENT;
+        else if(!depth && stencil)
+            attachment_type = GL_STENCIL_INDEX;
+
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        if(!depth && !stencil)
+            glTexImage2D(GL_TEXTURE_2D, 0, attachment_type, sizex, sizey, 0, attachment_type, GL_UNSIGNED_BYTE, NULL);
+        else if(depth && !stencil)
+            glTexImage2D(GL_TEXTURE_2D, 0, attachment_type, sizex, sizey, 0, attachment_type, GL_FLOAT, NULL);
+
+        else
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, sizex, sizey, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);//GL_CLAMP_TO_BORDER
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);//GL_CLAMP_TO_BORDER
+        glBindTexture(GL_TEXTURE_2D, 0);
+        return textureID;
+        }
+        """
+        
+    def setup_depthbuffer(self):
+        (self.depthbuffer_id,) = opengl.glGenFramebuffers(1)
+        opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, self.depthbuffer_id)
+        self.depthmap = self.create_depth_texture(1024, 1024)
+        opengl.glFramebufferTexture2D(opengl.GL_FRAMEBUFFER, opengl.GL_DEPTH_ATTACHMENT, opengl.GL_TEXTURE_2D, self.depthmap, 0)
+        #opengl.glDrawBuffer(opengl.GL_NONE)
+        #opengl.glReadBuffer(opengl.GL_NONE)
+        opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, 0)
+
+    """
+
+    depthMap = generateTextureAttachment(1, 0, getWindowWidth(), getWindowHeight());
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    GLuint status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+      if(status != GL_FRAMEBUFFER_COMPLETE)
+          printf("GL_FRAMEBUFFER_COMPLETE failed, CANNOT use FBO\n");
+
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    return fbo;"""
 
     def setup_glfbo(self):
         ## FBO initialisation
@@ -179,13 +229,16 @@ class Application(Widget):
 
         self.skybox_shader = Shader("shaders/skybox.vert", "shaders/skybox.frag").get_program()
 
+    def reload_shaders(self):
+        self.program = Shader("shaders/planet.vert", "shaders/planet.frag").get_program()
+
     def init_objects(self):
         self.skybox_texture = self.load_texture("resources/skybox/milkyway.jpg")
         #self.mercury = Planet("config/mercury.json")
         #self.venus = Planet("config/venus.json")
         self.earth = Planet("config/earth.json")
-        #self.mars = Planet("config/mars.json")
-        #self.jupiter = Planet("config/jupiter.json")
+        self.mars = Planet("config/mars.json")
+        self.jupiter = Planet("config/jupiter.json")
         #self.saturn = Planet("config/saturn.json")
 
     def load_texture(self, path):
@@ -204,7 +257,7 @@ class Application(Widget):
 
         """GLuint loadCubemap(char **faces)
         {
-        	GLuint textureID;
+            GLuint textureID;
             glGenTextures(1, &textureID);
             glActiveTexture(GL_TEXTURE0);
 
@@ -251,131 +304,20 @@ class Application(Widget):
         perspective_arr = np.array(self.perspective_matrix, dtype=np.float32).reshape(4, 4)
         view_arr = np.array(self.arcball_camera.view_matrix, dtype=np.float32).reshape(4, 4)
 
+        time_theta = self.global_time/100.0
         #self.draw_planet(self.mercury, self.program, self.sphere_buffer, perspective_arr, view_arr)
         #self.draw_planet(self.venus, self.program, self.sphere_buffer, perspective_arr, view_arr)
-        self.draw_planet(self.earth, self.program, self.sphere_buffer, perspective_arr, view_arr)
-        #self.draw_planet(self.mars, self.program, self.sphere_buffer, perspective_arr, view_arr)
+        #self.draw_planet(self.arcball_camera, self.earth, self.program, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_program, self.atmosphere_buffer)
+        self.earth.draw(self.arcball_camera, self.program, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_program, self.atmosphere_buffer, time_theta)
+        self.mars.draw(self.arcball_camera, self.program, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_program, self.atmosphere_buffer, time_theta)
+        #self.jupiter.draw(self.arcball_camera, self.program, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_program, self.atmosphere_buffer, time_theta)
         #self.draw_planet(self.jupiter, self.program)
         #self.draw_planet(self.saturn, self.program)
         
+
         opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, 0)
 
         opengl.glDisable(opengl.GL_DEPTH_TEST)
-
-    def draw_planet(self, planet, shader_program, buffer_object, perspective_arr, view_arr):
-        opengl.glUseProgram(shader_program)
-        #planet.update_planet_model(self.global_time/10.0)
-
-        opengl.glBindBuffer(opengl.GL_ARRAY_BUFFER, buffer_object.vbo)
-
-        self.draw_sphere_object(planet.planet, shader_program, buffer_object, perspective_arr, view_arr)
-        self.draw_moons(planet, shader_program, buffer_object, perspective_arr, view_arr)
-
-        #if planet.planet['draw_atmosphere']:
-        #    self.draw_atmosphere(planet, self.atmosphere_program, perspective_arr, view_arr)
-    
-    def draw_moons(self, planet, shader_program, buffer_object, perspective_arr, view_arr):
-        opengl.glBindBuffer(opengl.GL_ARRAY_BUFFER, buffer_object.vbo)
-        planet.update_moon_models(self.global_time/100.0)
-
-        for moon in planet.planet['moons']:
-            self.draw_sphere_object(moon, shader_program, buffer_object, perspective_arr, view_arr)
-
-    def draw_sphere_object(self, object_dict, shader_program, buffer_object, perspective_arr, view_arr):
-        u_loc = opengl.glGetUniformLocation(shader_program, b"projection")
-        opengl.glUniformMatrix4fv(u_loc, 1, False, np.array(perspective_arr).flatten().tobytes())
-        view_loc = opengl.glGetUniformLocation(shader_program, b"view")
-        opengl.glUniformMatrix4fv(view_loc, 1, False, view_arr.flatten().tobytes())
-        model_loc = opengl.glGetUniformLocation(shader_program, b"model")
-        opengl.glUniformMatrix4fv(model_loc, 1, False, object_dict['model'].flatten().tobytes())
-
-        camera_position = self.arcball_camera.camera_model_view_position(list(object_dict['model'].flatten()))
-        opengl.glUniform3f(opengl.glGetUniformLocation(shader_program, b"camera_position"), camera_position[0], camera_position[1], camera_position[2])
-        opengl.glUniform3f(opengl.glGetUniformLocation(shader_program, b"lightPosition"),10.0, 5.0, -4.0)
-
-        opengl.glActiveTexture(opengl.GL_TEXTURE1)
-        opengl.glBindTexture(opengl.GL_TEXTURE_2D, object_dict['texture_map'])
-        opengl.glUniform1i(opengl.glGetUniformLocation(shader_program, b"texture1"), 1)
-        #opengl.glActiveTexture(opengl.GL_TEXTURE2)
-        #opengl.glBindTexture(opengl.GL_TEXTURE_2D, planet.normal_map)
-        #opengl.glUniform1i(opengl.glGetUniformLocation(shader_program, b"normal_map"), 2)
-        #opengl.glActiveTexture(opengl.GL_TEXTURE3)
-        #opengl.glBindTexture(opengl.GL_TEXTURE_2D, planet.specular_map)
-        #opengl.glUniform1i(opengl.glGetUniformLocation(shader_program, b"specular_map"), 3)
-        opengl.glActiveTexture(opengl.GL_TEXTURE0)
-        
-        opengl.glEnableVertexAttribArray(0)
-        opengl.glVertexAttribPointer(0, 3, opengl.GL_FLOAT, False, 12, 0)
-        opengl.glEnableVertexAttribArray(1)
-        opengl.glVertexAttribPointer(1, 3, opengl.GL_FLOAT, False, 12, buffer_object.point_nbytes)
-        opengl.glEnableVertexAttribArray(2)
-        opengl.glVertexAttribPointer(2, 3, opengl.GL_FLOAT, False, 12, buffer_object.point_nbytes+buffer_object.tangent_nbytes)
-        opengl.glDrawArrays(opengl.GL_TRIANGLES, 0, buffer_object.num_vertices)
-
-    def draw_atmosphere(self, planet, shader_program, perspective_arr, view_arr):
-        opengl.glEnable(opengl.GL_BLEND)
-        opengl.glBlendFunc(opengl.GL_ONE, opengl.GL_ONE)
-        opengl.glUseProgram(shader_program)
-
-        #model_arr = np.array(self.arcball_camera.view_translation, dtype=np.float32).reshape(4, 4)
-        #model_arr = np.array(model, dtype=np.float32).reshape(4, 4)
-        opengl.glBindBuffer(opengl.GL_ARRAY_BUFFER, self.atmosphere_buffer.vbo)
-
-        opengl.glUniformMatrix4fv(opengl.glGetUniformLocation(shader_program, b"projection"), 1, False, np.array(perspective_arr).flatten().tobytes())
-        opengl.glUniformMatrix4fv(opengl.glGetUniformLocation(shader_program, b"view"), 1, False, view_arr.flatten().tobytes())
-        opengl.glUniformMatrix4fv(opengl.glGetUniformLocation(shader_program, b"model"), 1, False, planet.planet['atmosphere']['model'].flatten().tobytes())
-
-        # Atmosphere constants
-        opengl.glUniform1f(opengl.glGetUniformLocation(shader_program, b"fInnerRadius"), planet.planet['scale'])
-        opengl.glUniform1f(opengl.glGetUniformLocation(shader_program, b"fOuterRadius"), planet.planet['atmosphere']['radius'])
-        opengl.glUniform3f(opengl.glGetUniformLocation(shader_program, b"C_R"), planet.planet['atmosphere']['C_R'][0], planet.planet['atmosphere']['C_R'][1], planet.planet['atmosphere']['C_R'][2])
-        opengl.glUniform1f(opengl.glGetUniformLocation(shader_program, b"K_R"), planet.planet['atmosphere']['K_R'])
-        opengl.glUniform1f(opengl.glGetUniformLocation(shader_program, b"K_M"), planet.planet['atmosphere']['K_M'])
-        opengl.glUniform1f(opengl.glGetUniformLocation(shader_program, b"G_M"), planet.planet['atmosphere']['G_M'])
-        opengl.glUniform1f(opengl.glGetUniformLocation(shader_program, b"E"), planet.planet['atmosphere']['E'])
-        
-        camera_position = self.arcball_camera.camera_model_view_position(list(planet.planet['atmosphere']['model'].flatten()))
-        opengl.glUniform3f(opengl.glGetUniformLocation(shader_program, b"camPosition"), camera_position[0], camera_position[1], camera_position[2])
-        opengl.glUniform3f(opengl.glGetUniformLocation(shader_program, b"lightPosition"), 10.0, 5.0, -4.0)
-
-        opengl.glEnableVertexAttribArray(0)
-        opengl.glVertexAttribPointer(0, 3, opengl.GL_FLOAT, False, 12, 0)
-        opengl.glEnableVertexAttribArray(1)
-        opengl.glVertexAttribPointer(1, 3, opengl.GL_FLOAT, False, 12, self.atmosphere_buffer.point_nbytes)
-        opengl.glDrawArrays(opengl.GL_TRIANGLES, 0, self.atmosphere_buffer.num_vertices)
-
-        opengl.glBlendFunc(opengl.GL_SRC_ALPHA, opengl.GL_ONE_MINUS_SRC_ALPHA)
-        #opengl.glDisable(opengl.GL_BLEND)
-
-    """def draw_screen(self, model, shader_program):
-        opengl.glUseProgram(shader_program)
-        perspective_arr = np.array(self.perspective_matrix, dtype=np.float32).reshape(4, 4)
-        view_arr = np.array(self.arcball_camera.view_matrix, dtype=np.float32).reshape(4, 4)
-        #model_arr = np.array(self.arcball_camera.view_translation, dtype=np.float32).reshape(4, 4)
-        model_arr = np.array(model, dtype=np.float32).reshape(4, 4)
-        opengl.glBindBuffer(opengl.GL_ARRAY_BUFFER, self.screen_vbo)
-
-        u_loc = opengl.glGetUniformLocation(shader_program, b"projection")
-        opengl.glUniformMatrix4fv(u_loc, 1, False, np.array(perspective_arr).flatten().tobytes())
-
-        view_loc = opengl.glGetUniformLocation(shader_program, b"view")
-        opengl.glUniformMatrix4fv(view_loc, 1, False, view_arr.flatten().tobytes())
-
-        model_loc = opengl.glGetUniformLocation(shader_program, b"model")
-        opengl.glUniformMatrix4fv(model_loc, 1, False, model_arr.flatten().tobytes())
-
-        camera_position = self.arcball_camera.camera_model_view_position([1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 0.0, 0.0, 0.0, 1.0])
-        opengl.glUniform3f(opengl.glGetUniformLocation(shader_program, b"camera_position"), camera_position[0], camera_position[1], camera_position[2])
-
-        opengl.glActiveTexture(opengl.GL_TEXTURE1)
-        opengl.glBindTexture(opengl.GL_TEXTURE_2D, self.glfboid)
-        opengl.glUniform1i(opengl.glGetUniformLocation(shader_program, b"screenTexture"), 0)
-        
-        opengl.glEnableVertexAttribArray(0)
-        opengl.glVertexAttribPointer(0, 2, opengl.GL_FLOAT, False, 8, 0)
-        opengl.glEnableVertexAttribArray(1)
-        opengl.glVertexAttribPointer(1, 2, opengl.GL_FLOAT, False, 8, self.quad_vertices.nbytes)
-        opengl.glDrawArrays(opengl.GL_TRIANGLES, 0, len(self.quad_vertices))"""
 
     def draw_skybox(self):
         opengl.glUseProgram(self.skybox_shader)
@@ -386,7 +328,6 @@ class Application(Widget):
 
         perspective_arr = np.array(self.perspective_matrix, dtype=np.float32).reshape(4, 4)
         view_arr = np.array(self.arcball_camera.view_matrix, dtype=np.float32).reshape(4, 4)
-        model_arr = np.identity(4)
         opengl.glUniformMatrix4fv(opengl.glGetUniformLocation(self.skybox_shader, b"projection"), 1, False, np.array(perspective_arr).flatten().tobytes())
         opengl.glUniformMatrix4fv(opengl.glGetUniformLocation(self.skybox_shader, b"view"), 1, False, view_arr.flatten().tobytes())
 
@@ -409,24 +350,35 @@ class MainApp(App):
     os.chdir(cwd)
 
     def onButtonPress(self, button):
-        print("asdf")
+        self.w.reload_shaders()
 
     def build(self):
+        self.w = Application()
         #root = GridLayout(cols=1, padding=10)
         root = BoxLayout(orientation='vertical')
         #self.button = Button(text="Click for pop-up")
         #root.add_widget(self.button)
 
+        tv = TreeView(root_options=dict(text='Solar System'),
+                      hide_root=False,
+                      indent_level=4)
+        n1 = tv.add_node(TreeViewLabel(text=self.w.earth.planet['name'].capitalize()))
+        n2 = tv.add_node(TreeViewLabel(text=self.w.mars.planet['name'].capitalize()))
+        for sub_object in self.w.mars.planet['moons']:
+            tv.add_node(TreeViewLabel(text=sub_object['name'].capitalize()), n2)
+        for sub_object in self.w.earth.planet['moons']:
+            tv.add_node(TreeViewLabel(text=sub_object['name'].capitalize()), n1)
+
         layout      = GridLayout(cols=1, padding=10)
-        popupLabel  = Label(text  = "Click for pop-up")
-        closeButton = Button(text = "Close the pop-up")
-        layout.add_widget(Slider(value_track=True, value_track_color=[1, 0, 0, 1]))
-        layout.add_widget(popupLabel)
+        #popupLabel  = Label(text  = "Click for pop-up")
+        closeButton = Button(text = "Reload\nShaders", size=(200, 100), on_press=self.onButtonPress)
+        #layout.add_widget(Slider(value_track=True, value_track_color=[1, 0, 0, 1]))
+        layout.add_widget(tv)
         layout.add_widget(closeButton)
         popup = Popup(title='Demo Popup',size_hint=(None, None), size=(200, 400), pos_hint={'top':.97,'right':.97},
                       content=layout, auto_dismiss=False)
         popup.open()  
-        w = Application()
+        
 
         layout2 = BoxLayout(opacity=0.5)
         #pb = ProgressBar(max=1000, size=(100, 100))
@@ -436,7 +388,7 @@ class MainApp(App):
         #layout2.add_widget(Button(text='Test Button', size=(100, 100)))
         
         # Draw the scene
-        layout2.add_widget(w)
+        layout2.add_widget(self.w)
         root.add_widget(layout2)
     
         return root
