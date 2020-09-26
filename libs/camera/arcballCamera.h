@@ -1,7 +1,7 @@
 #ifndef ARCBALLCAMERA_H
 #define ARCBALLCAMERA_H
 
-#include "matrixMath.h"
+#include "../src/matrixMath.h"
 
 typedef struct ArcCamera {
 	mat4 translation_matrix;

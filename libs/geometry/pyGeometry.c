@@ -3,11 +3,13 @@
 #include "structmember.h"
 #include "sphere.h"
 #include "quadCube.h"
+#include "objLoader.h"
 
 typedef struct PyGeometryInterface {
 	PyObject_HEAD
 	sphere s;
 	quadCube cube;
+	obj mesh;
 	int subdivisions;
 } PyGeometryInterface;
 
@@ -143,6 +145,59 @@ static PyObject *quadcube_get_tangents(PyGeometryInterface *self, void *closure)
     return python_val;
 }
 
+static PyObject *mesh_get_points(PyGeometryInterface *self, void *closure)
+{
+	PyObject* python_val = PyList_New(self->mesh.vertexNumber*3);
+	int index_count = 0;
+	printf("Mesh vertexNumber: %d", self->mesh.vertexNumber);
+	for (int i = 0; i < self->mesh.vertexNumber; i++)
+    {
+        PyObject* point_double = Py_BuildValue("d", self->mesh.points[i].v[0]);
+        PyList_SetItem(python_val, index_count, point_double);
+		point_double = Py_BuildValue("d", self->mesh.points[i].v[1]);
+        PyList_SetItem(python_val, index_count+1, point_double);
+		point_double = Py_BuildValue("d", self->mesh.points[i].v[2]);
+        PyList_SetItem(python_val, index_count+2, point_double);
+		index_count += 3;
+
+    }
+    return python_val;
+}
+
+static PyObject *mesh_get_normals(PyGeometryInterface *self, void *closure)
+{
+	PyObject* python_val = PyList_New(self->mesh.vertexNumber*3);
+	int index_count = 0;
+	for (int i = 0; i < self->mesh.vertexNumber; i++)
+    {
+        PyObject* point_double = Py_BuildValue("d", self->mesh.normals[i].v[0]);
+        PyList_SetItem(python_val, index_count, point_double);
+		point_double = Py_BuildValue("d", self->mesh.normals[i].v[1]);
+        PyList_SetItem(python_val, index_count+1, point_double);
+		point_double = Py_BuildValue("d", self->mesh.normals[i].v[2]);
+        PyList_SetItem(python_val, index_count+2, point_double);
+		index_count += 3;
+    }
+    return python_val;
+}
+
+static PyObject *mesh_get_tangents(PyGeometryInterface *self, void *closure)
+{
+	PyObject* python_val = PyList_New(self->mesh.vertexNumber*3);
+	int index_count = 0;
+	for (int i = 0; i < self->mesh.vertexNumber; i++)
+    {
+        PyObject* point_double = Py_BuildValue("d", self->mesh.tangents[i].v[0]);
+        PyList_SetItem(python_val, index_count, point_double);
+		point_double = Py_BuildValue("d", self->mesh.tangents[i].v[1]);
+        PyList_SetItem(python_val, index_count+1, point_double);
+		point_double = Py_BuildValue("d", self->mesh.tangents[i].v[2]);
+        PyList_SetItem(python_val, index_count+2, point_double);
+		index_count += 3;
+    }
+    return python_val;
+}
+
 
 static PyGetSetDef Geometry_getsetters[] = {
     {"tetrahedron_points", (getter) tetrahedron_get_points, NULL, "Tetrahedron points", NULL},
@@ -150,6 +205,10 @@ static PyGetSetDef Geometry_getsetters[] = {
     {"quadcube_points", (getter) quadcube_get_points, NULL, "Quadcube points", NULL},
 	{"quadcube_normals", (getter) quadcube_get_normals, NULL, "Quadcube smooth normals", NULL},
 	{"quadcube_tangents", (getter) quadcube_get_tangents, NULL, "Quadcube tangents for TBN calculation", NULL},
+	
+    {"mesh_points", (getter) mesh_get_points, NULL, "Mesh points", NULL},
+	{"mesh_normals", (getter) mesh_get_normals, NULL, "Mesh normals", NULL},
+	{"mesh_tangents", (getter) mesh_get_tangents, NULL, "Mesh tangents for TBN calculation", NULL},
     {NULL}  /* Sentinel */
 };
 
@@ -191,9 +250,25 @@ static PyObject *quadcube_sphere(PyGeometryInterface *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+static PyObject *mesh_object(PyGeometryInterface *self, PyObject *args)
+{
+	char *filepath;
+
+	if (!PyArg_ParseTuple(args, "s*", &filepath))
+		return NULL;
+
+
+    load_object_file(filepath, &self->mesh);
+
+	//printf("filename: %s\n", filepath);
+
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef Geometry_methods[] = {
 	{"tetrahedron_sphere", (PyCFunction) tetrahedron_sphere, METH_VARARGS, "Generate a sphere by tetrahedron subdivision."},
-	{"quadcube", (PyCFunction) quadcube_sphere, METH_VARARGS, "Generate a sphere from a quadcube"},
+	{"quadcube", (PyCFunction) quadcube_sphere, METH_VARARGS, "Generate a sphere from a quadcube."},
+	{"mesh", (PyCFunction) mesh_object, METH_VARARGS, "Load object from a file."},
     {NULL, NULL, 0, NULL}
 };
 

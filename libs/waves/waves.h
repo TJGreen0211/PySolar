@@ -4,7 +4,7 @@
 #endif
 
 #include <windows.h>
-#include "matrixMath.h"
+#include "../src/matrixMath.h"
 
 typedef struct complexType {
 	double real;

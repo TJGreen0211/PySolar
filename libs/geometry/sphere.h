@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#include "matrixMath.h"
+#include "../src/matrixMath.h"
 
 typedef struct sphere {
 	int size;
