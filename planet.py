@@ -22,9 +22,9 @@ class Planet(object):
         self.normal_map = None
         if len(self.planet_params['textures']['normalMap']) > 0:
             self.normal_map = self._load_texture(self.planet_params['textures']['normalMap'])
-        #self.specular_map = None
-        #if len(self.planet_params['textures']['specularMap']) > 0:
-        #    self.specular_map = self._load_texture(self.planet_params['textures']['specularMap'])
+        self.specular_map = None
+        if len(self.planet_params['textures']['specularMap']) > 0:
+            self.specular_map = self._load_texture(self.planet_params['textures']['specularMap'])
 
     def init_planet(self, planet_dict):
         planet_dict['name'] = self.planet_params['name']
@@ -103,34 +103,41 @@ class Planet(object):
             planet_dict['moons'].append(temp_moon_dict)
             
     def update_planet_model(self, time):
-        self.planet['model'][0][3] = self.planet_params['semiMajorAxis']/1000000.0*math.cos(time)
-        self.planet['model'][2][3] = self.planet_params['semiMajorAxis']/1000000.0*math.sin(time)
+        rotation_matrix = np.identity(4, dtype=np.float32)
+        rotation_matrix[2][2] = rotation_matrix[0][0] = math.cos(time/2000.0)
+        rotation_matrix[0][2] = math.sin(time/2000.0)
+        rotation_matrix[2][0] = -rotation_matrix[0][2]
+
+        self.planet['model'] = np.dot(self.planet['model'], rotation_matrix)
+
+        #self.planet['model'][0][3] = self.planet_params['semiMajorAxis']/1000000.0*math.cos(time)
+        #self.planet['model'][2][3] = self.planet_params['semiMajorAxis']/1000000.0*math.sin(time)
 
     def update_moon_models(self, time):
         for moon in self.planet['moons']:
             moon['model'][0][3] = (self.planet['model'][0][3])+moon['semimajor_axis']*math.cos(time)
             moon['model'][2][3] = (self.planet['model'][2][3])+moon['semimajor_axis']*math.sin(time)
 
-    def draw(self, arcball_camera, shader_program, buffer_object, perspective_arr, view_arr, atmosphere_program, atmosphere_buffer, time):
+    def draw(self, arcball_camera, shader_program, buffer_object, perspective_arr, view_arr, atmosphere_program, atmosphere_buffer, time, depthmap=None):
         opengl.glUseProgram(shader_program)
         #planet.update_planet_model(self.global_time/10.0)
 
         opengl.glBindBuffer(opengl.GL_ARRAY_BUFFER, buffer_object.vbo)
 
-        self.draw_sphere_object(arcball_camera, self.planet, shader_program, buffer_object, perspective_arr, view_arr)
-        self.draw_moons(arcball_camera, shader_program, buffer_object, perspective_arr, view_arr, time)
+        self.draw_sphere_object(arcball_camera, self.planet, shader_program, buffer_object, perspective_arr, view_arr, depthmap)
+        self.draw_moons(arcball_camera, shader_program, buffer_object, perspective_arr, view_arr, time, depthmap)
 
-        #if self.planet['draw_atmosphere']:
-        #    self.draw_atmosphere(arcball_camera, atmosphere_program, atmosphere_buffer, perspective_arr, view_arr)
+        if self.planet['draw_atmosphere']:
+            self.draw_atmosphere(arcball_camera, atmosphere_program, atmosphere_buffer, perspective_arr, view_arr)
     
-    def draw_moons(self, arcball_camera, shader_program, buffer_object, perspective_arr, view_arr, time):
+    def draw_moons(self, arcball_camera, shader_program, buffer_object, perspective_arr, view_arr, time, depthmap):
         opengl.glBindBuffer(opengl.GL_ARRAY_BUFFER, buffer_object.vbo)
         self.update_moon_models(time)
 
         for moon in self.planet['moons']:
-            self.draw_sphere_object(arcball_camera, moon, shader_program, buffer_object, perspective_arr, view_arr)
+            self.draw_sphere_object(arcball_camera, moon, shader_program, buffer_object, perspective_arr, view_arr, depthmap)
 
-    def draw_sphere_object(self, arcball_camera, object_dict, shader_program, buffer_object, perspective_arr, view_arr):
+    def draw_sphere_object(self, arcball_camera, object_dict, shader_program, buffer_object, perspective_arr, view_arr, depthmap):
         u_loc = opengl.glGetUniformLocation(shader_program, b"projection")
         opengl.glUniformMatrix4fv(u_loc, 1, False, np.array(perspective_arr).flatten().tobytes())
         view_loc = opengl.glGetUniformLocation(shader_program, b"view")
@@ -140,7 +147,7 @@ class Planet(object):
 
         camera_position = arcball_camera.camera_model_view_position(list(object_dict['model'].flatten()))
         opengl.glUniform3f(opengl.glGetUniformLocation(shader_program, b"camera_position"), camera_position[0], camera_position[1], camera_position[2])
-        opengl.glUniform3f(opengl.glGetUniformLocation(shader_program, b"lightPosition"),10.0, 5.0, -4.0)
+        opengl.glUniform3f(opengl.glGetUniformLocation(shader_program, b"lightPosition"), 10.0, 5.0, -4.0)
 
         opengl.glActiveTexture(opengl.GL_TEXTURE1)
         opengl.glBindTexture(opengl.GL_TEXTURE_2D, object_dict['texture_map'])
@@ -149,9 +156,14 @@ class Planet(object):
             opengl.glActiveTexture(opengl.GL_TEXTURE2)
             opengl.glBindTexture(opengl.GL_TEXTURE_2D, self.normal_map)
             opengl.glUniform1i(opengl.glGetUniformLocation(shader_program, b"normal_map"), 2)
-        #opengl.glActiveTexture(opengl.GL_TEXTURE3)
-        #opengl.glBindTexture(opengl.GL_TEXTURE_2D, planet.specular_map)
-        #opengl.glUniform1i(opengl.glGetUniformLocation(shader_program, b"specular_map"), 3)
+        if self.specular_map != None:
+            opengl.glActiveTexture(opengl.GL_TEXTURE3)
+            opengl.glBindTexture(opengl.GL_TEXTURE_2D, self.specular_map)
+            opengl.glUniform1i(opengl.glGetUniformLocation(shader_program, b"specular_map"), 3)
+        if depthmap != None:
+            opengl.glActiveTexture(opengl.GL_TEXTURE4)
+            opengl.glBindTexture(opengl.GL_TEXTURE_2D, depthmap)
+            opengl.glUniform1i(opengl.glGetUniformLocation(shader_program, b"depthmap"), 4)
         opengl.glActiveTexture(opengl.GL_TEXTURE0)
         
         opengl.glEnableVertexAttribArray(0)

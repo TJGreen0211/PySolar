@@ -35,6 +35,7 @@ from kivy.uix.treeview import TreeView, TreeViewLabel
 from shader import Shader
 from buffer import Buffer
 from planet import Planet
+from solarsystem import SolarSystem
 
 sys.path.insert(1, os.getcwd()+'/bin')
 
@@ -64,6 +65,7 @@ class Application(Widget):
 
         opengl.glEnable(opengl.GL_CULL_FACE)
         opengl.glCullFace(opengl.GL_BACK)
+        #opengl.glEnable(opengl.GL_FRAMEBUFFER_SRGB)
         
         #self.wave_patch = waves.Waves(dimension=128)
         #print(self.wave_patch.generate_waves(0.0))
@@ -106,8 +108,14 @@ class Application(Widget):
 
     def update_glsl(self, *largs):
         self.angle += 0.01
+        self.draw_depthmap()
+        self.blit_depth_fbo()
+
+
         self.draw_fbo(self.glfboid)
         self.blit_fbo()
+
+        
         self.canvas.ask_update()
         self.global_time += 1
 
@@ -122,43 +130,15 @@ class Application(Widget):
     def create_depth_texture(self, sizex, sizey):
         (texture,) = opengl.glGenTextures(1)
         opengl.glBindTexture(opengl.GL_TEXTURE_2D, texture)
-        opengl.glTexParameteri(opengl.GL_TEXTURE_2D, opengl.GL_TEXTURE_WRAP_S, opengl.GL_NEAREST)
-        opengl.glTexParameteri(opengl.GL_TEXTURE_2D, opengl.GL_TEXTURE_WRAP_T, opengl.GL_NEAREST)
-        opengl.glTexParameteri(opengl.GL_TEXTURE_2D, opengl.GL_TEXTURE_MAG_FILTER, opengl.GL_LINEAR)
-        opengl.glTexParameteri(opengl.GL_TEXTURE_2D, opengl.GL_TEXTURE_MIN_FILTER, opengl.GL_LINEAR)
-        #opengl.glTexImage2D(opengl.GL_TEXTURE_2D, 0, opengl.GL_DEPTH_COMPONENT, sizex, sizey, 0, opengl.GL_DEPTH_COMPONENT, opengl.GL_FLOAT, bytes([0]))
+        opengl.glTexParameteri(opengl.GL_TEXTURE_2D, opengl.GL_TEXTURE_WRAP_S, opengl.GL_REPEAT)
+        opengl.glTexParameteri(opengl.GL_TEXTURE_2D, opengl.GL_TEXTURE_WRAP_T, opengl.GL_REPEAT)
+        opengl.glTexParameteri(opengl.GL_TEXTURE_2D, opengl.GL_TEXTURE_MAG_FILTER, opengl.GL_NEAREST)
+        opengl.glTexParameteri(opengl.GL_TEXTURE_2D, opengl.GL_TEXTURE_MIN_FILTER, opengl.GL_NEAREST)
+        opengl.glTexImage2D(opengl.GL_TEXTURE_2D, 0, opengl.GL_DEPTH_COMPONENT, sizex, sizey, 0, opengl.GL_DEPTH_COMPONENT, opengl.GL_FLOAT, (np.ones(sizex*sizey*4, np.uint8)*128).tobytes())
         #opengl.glEnable(opengl.GL_TEXTURE_2D)
         opengl.glBindTexture(opengl.GL_TEXTURE_2D, 0)
 
         return texture
-
-        """ GLuint generateTextureAttachment(int depth, int stencil, int sizex, int sizey) {
-        GLuint textureID;
-        GLenum attachment_type;
-        if(!depth && !stencil)
-            attachment_type = GL_RGB;
-        else if(depth && !stencil)
-            attachment_type = GL_DEPTH_COMPONENT;
-        else if(!depth && stencil)
-            attachment_type = GL_STENCIL_INDEX;
-
-        glGenTextures(1, &textureID);
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        if(!depth && !stencil)
-            glTexImage2D(GL_TEXTURE_2D, 0, attachment_type, sizex, sizey, 0, attachment_type, GL_UNSIGNED_BYTE, NULL);
-        else if(depth && !stencil)
-            glTexImage2D(GL_TEXTURE_2D, 0, attachment_type, sizex, sizey, 0, attachment_type, GL_FLOAT, NULL);
-
-        else
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, sizex, sizey, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);//GL_CLAMP_TO_BORDER
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);//GL_CLAMP_TO_BORDER
-        glBindTexture(GL_TEXTURE_2D, 0);
-        return textureID;
-        }
-        """
         
     def setup_depthbuffer(self):
         (self.depthbuffer_id,) = opengl.glGenFramebuffers(1)
@@ -169,19 +149,6 @@ class Application(Widget):
         #opengl.glReadBuffer(opengl.GL_NONE)
         opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, 0)
 
-    """
-
-    depthMap = generateTextureAttachment(1, 0, getWindowWidth(), getWindowHeight());
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-    GLuint status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-      if(status != GL_FRAMEBUFFER_COMPLETE)
-          printf("GL_FRAMEBUFFER_COMPLETE failed, CANNOT use FBO\n");
-
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    return fbo;"""
 
     def setup_glfbo(self):
         ## FBO initialisation
@@ -204,7 +171,26 @@ class Application(Widget):
 
         opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, 0)
         opengl.glBindTexture(opengl.GL_TEXTURE_2D, 0)
+    
+        #self.quad_vertices = np.array([-1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0,1.0, 1.0], dtype=np.float32)
+        #self.quad_tex =  np.array([0.0, 1.0, 0.0, 0.0,1.0, 0.0, 0.0, 1.0,1.0, 0.0,1.0, 1.0], dtype=np.float32)
+        #self.screen_vbo = Buffer().add_buffer_data(self.quad_vertices, self.quad_tex)
 
+    def init_shaders(self):
+        self.program = Shader("shaders/planet.vert", "shaders/planet.frag").get_program()
+        self.atmosphere_program = Shader("shaders/atmosphere.vert", "shaders/atmosphere.frag").get_program()
+        self.screen_program = Shader("shaders/screen.vert", "shaders/screen.frag").get_program()
+        self.star_shader = Shader("shaders/star.vert", "shaders/star.frag").get_program()
+
+        self.shadow_shader = Shader("shaders/shadow.vert", "shaders/shadow.frag").get_program()
+        self.skybox_shader = Shader("shaders/skybox.vert", "shaders/skybox.frag").get_program()
+
+    def reload_shaders(self):
+        #self.shadow_shader = Shader("shaders/shadow.vert", "shaders/shadow.frag").get_program()
+        self.star_shader = Shader("shaders/star.vert", "shaders/star.frag").get_program()
+        #self.program = Shader("shaders/planet.vert", "shaders/planet.frag").get_program()
+
+    def init_objects(self):
         self.g = geometry.Geometry(subdivisions=1)
         
         self.g.quadcube(10)
@@ -217,28 +203,15 @@ class Application(Widget):
         atmosphere = np.array(self.g.tetrahedron_points, dtype=np.float32)
         atmosphere_normals = np.array(self.g.tetrahedron_normals, dtype=np.float32)
         self.atmosphere_buffer = Buffer(atmosphere, atmosphere_normals)
-    
-        #self.quad_vertices = np.array([-1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0,1.0, 1.0], dtype=np.float32)
-        #self.quad_tex =  np.array([0.0, 1.0, 0.0, 0.0,1.0, 0.0, 0.0, 1.0,1.0, 0.0,1.0, 1.0], dtype=np.float32)
-        #self.screen_vbo = Buffer().add_buffer_data(self.quad_vertices, self.quad_tex)
 
-    def init_shaders(self):
-        self.program = Shader("shaders/planet.vert", "shaders/planet.frag").get_program()
-        self.atmosphere_program = Shader("shaders/atmosphere.vert", "shaders/atmosphere.frag").get_program()
-        self.screen_program = Shader("shaders/screen.vert", "shaders/screen.frag").get_program()
-
-        self.skybox_shader = Shader("shaders/skybox.vert", "shaders/skybox.frag").get_program()
-
-    def reload_shaders(self):
-        self.program = Shader("shaders/planet.vert", "shaders/planet.frag").get_program()
-
-    def init_objects(self):
         self.skybox_texture = self.load_texture("resources/skybox/milkyway.jpg")
         #self.mercury = Planet("config/mercury.json")
         #self.venus = Planet("config/venus.json")
         self.earth = Planet("config/earth.json")
         self.mars = Planet("config/mars.json")
         self.jupiter = Planet("config/jupiter.json")
+
+        self.sun = SolarSystem()
         #self.saturn = Planet("config/saturn.json")
 
     def load_texture(self, path):
@@ -255,32 +228,6 @@ class Application(Widget):
         opengl.glEnable(opengl.GL_TEXTURE_2D)
         opengl.glBindTexture(opengl.GL_TEXTURE_2D, 0)
 
-        """GLuint loadCubemap(char **faces)
-        {
-            GLuint textureID;
-            glGenTextures(1, &textureID);
-            glActiveTexture(GL_TEXTURE0);
-
-            int width, height;
-            unsigned char* image;
-
-            glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
-            for (GLuint i = 0; i < 6; i++)
-            {
-                image = SOIL_load_image(faces[i], &width, &height, 0, SOIL_LOAD_RGB);
-                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-
-            }
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-
-            return textureID;
-        }"""
-
         return texture
 
     def blit_fbo(self):
@@ -289,25 +236,48 @@ class Application(Widget):
         opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, self.kvfboid)
         opengl.glTexSubImage2D(opengl.GL_TEXTURE_2D, 0, 0, 0, self.w, self.h, opengl.GL_RGBA, opengl.GL_UNSIGNED_BYTE, pixels)
         opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, 0)
+    
+    def blit_depth_fbo(self):
+        opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, self.depthbuffer_id)
+        pixels = opengl.glReadPixels(0, 0, 1024, 1024, opengl.GL_RGBA, opengl.GL_UNSIGNED_BYTE)
+        opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, self.kvfboid)
+        opengl.glTexSubImage2D(opengl.GL_TEXTURE_2D, 0, 0, 0, self.w, self.h, opengl.GL_RGBA, opengl.GL_UNSIGNED_BYTE, pixels)
+        opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, 0)
+
+    def draw_depthmap(self):
+        opengl.glUseProgram(self.shadow_shader)
+        time_theta = self.global_time/200.0
+        perspective_arr = np.array(self.perspective_matrix, dtype=np.float32).reshape(4, 4)
+        view_arr = np.array(self.arcball_camera.view_matrix, dtype=np.float32).reshape(4, 4)
+        opengl.glViewport(0, 0, 1024, 1024)
+        opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, self.depthbuffer_id)
+        opengl.glClear(opengl.GL_DEPTH_BUFFER_BIT)
+        self.earth.draw(self.arcball_camera, self.program, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_program, self.atmosphere_buffer, time_theta, self.depthmap)
+        self.mars.draw(self.arcball_camera, self.program, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_program, self.atmosphere_buffer, time_theta, self.depthmap)
+        opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, 0)
 
     def draw_fbo(self, targetfbo):
+        time_theta = self.global_time/200.0
+        perspective_arr = np.array(self.perspective_matrix, dtype=np.float32).reshape(4, 4)
+        view_arr = np.array(self.arcball_camera.view_matrix, dtype=np.float32).reshape(4, 4)
+
+        opengl.glViewport(0, 0, self.w, self.h)
         opengl.glEnable(opengl.GL_DEPTH_TEST)
         #opengl.glDepthMask(opengl.GL_FALSE)
         opengl.glDepthFunc(opengl.GL_LESS)
 
         opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, targetfbo)
-        opengl.glClearColor(0.0, 1.0, 1.0, 1.0)
+        opengl.glClearColor(0.1, 0.1, 0.1, 1.0)
         opengl.glClear(opengl.GL_COLOR_BUFFER_BIT | opengl.GL_DEPTH_BUFFER_BIT)
 
         #self.draw_skybox()
 
-        perspective_arr = np.array(self.perspective_matrix, dtype=np.float32).reshape(4, 4)
-        view_arr = np.array(self.arcball_camera.view_matrix, dtype=np.float32).reshape(4, 4)
-
-        time_theta = self.global_time/100.0
+        self.earth.update_planet_model(time_theta)
+        self.mars.update_planet_model(time_theta)
         #self.draw_planet(self.mercury, self.program, self.sphere_buffer, perspective_arr, view_arr)
         #self.draw_planet(self.venus, self.program, self.sphere_buffer, perspective_arr, view_arr)
         #self.draw_planet(self.arcball_camera, self.earth, self.program, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_program, self.atmosphere_buffer)
+        self.sun.draw(self.arcball_camera, self.star_shader, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_program, self.atmosphere_buffer, time_theta)
         self.earth.draw(self.arcball_camera, self.program, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_program, self.atmosphere_buffer, time_theta)
         self.mars.draw(self.arcball_camera, self.program, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_program, self.atmosphere_buffer, time_theta)
         #self.jupiter.draw(self.arcball_camera, self.program, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_program, self.atmosphere_buffer, time_theta)
