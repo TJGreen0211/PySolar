@@ -18,8 +18,8 @@
     },
     "textures": {
         "textureMap": "resources/textures/2k_mercury.jpg",
-        "normalMap": "",
-        "specularMap": ""
+        "normalMap": "resources/textures/mercury_normal_map.png",
+        "specularMap": "resources/textures/mercury_specular_map.png"
     },
     "moons": []
  }

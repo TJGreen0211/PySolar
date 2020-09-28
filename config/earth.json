@@ -19,7 +19,7 @@
     "textures": {
         "textureMap": "resources/textures/earth_day.jpg",
         "normalMap": "resources/textures/2k_earth_normal_map.tif",
-        "specularMap": "resources/textures/2k_earth_specular_map.tif"
+        "specularMap": "resources/textures/earth_specular_map.jpg"
     },
     "moons": [
        {
@@ -31,9 +31,9 @@
            "siderealRotation": 27.321661,
            "axialTilt": 1.5424,
            "textures": {
-                "textureMap": "resources/textures/moons/moon_normal_map.jpg",
-                "normalMap": "",
-                "specularMap": ""
+                "textureMap": "resources/textures/moons/moon.jpg",
+                "normalMap": "resources/textures/moons/moon_normal_map.jpg",
+                "specularMap": "resources/textures/moons/moon_specular_map.jpg"
             }
        }
     ]

@@ -30,7 +30,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.slider import Slider
 from kivy.uix.progressbar import ProgressBar
-from kivy.uix.treeview import TreeView, TreeViewLabel
+from kivy.uix.treeview import TreeView, TreeViewLabel, TreeViewNode
 
 from shader import Shader
 from buffer import Buffer
@@ -190,6 +190,10 @@ class Application(Widget):
         self.star_shader = Shader("shaders/star.vert", "shaders/star.frag").get_program()
         #self.program = Shader("shaders/planet.vert", "shaders/planet.frag").get_program()
 
+        x = self.earth.planet['model'][0][3]-self.earth.planet['scale']-self.earth.planet['scale']/2.0
+        z = self.earth.planet['model'][2][3]
+        self.arcball_camera.set_view_position([x, 0.0, z])
+
     def init_objects(self):
         self.g = geometry.Geometry(subdivisions=1)
         
@@ -206,7 +210,7 @@ class Application(Widget):
 
         self.skybox_texture = self.load_texture("resources/skybox/milkyway.jpg")
         #self.mercury = Planet("config/mercury.json")
-        #self.venus = Planet("config/venus.json")
+        self.venus = Planet("config/venus.json")
         self.earth = Planet("config/earth.json")
         self.mars = Planet("config/mars.json")
         self.jupiter = Planet("config/jupiter.json")
@@ -272,14 +276,14 @@ class Application(Widget):
 
         #self.draw_skybox()
 
-        self.earth.update_planet_model(time_theta)
-        self.mars.update_planet_model(time_theta)
-        #self.draw_planet(self.mercury, self.program, self.sphere_buffer, perspective_arr, view_arr)
+        #self.mercury.draw(self.arcball_camera, self.program, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_program, self.atmosphere_buffer, time_theta)
+        #self.venus.draw(self.arcball_camera, self.program, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_program, self.atmosphere_buffer, time_theta)
         #self.draw_planet(self.venus, self.program, self.sphere_buffer, perspective_arr, view_arr)
         #self.draw_planet(self.arcball_camera, self.earth, self.program, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_program, self.atmosphere_buffer)
         self.sun.draw(self.arcball_camera, self.star_shader, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_program, self.atmosphere_buffer, time_theta)
         self.earth.draw(self.arcball_camera, self.program, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_program, self.atmosphere_buffer, time_theta)
         self.mars.draw(self.arcball_camera, self.program, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_program, self.atmosphere_buffer, time_theta)
+        
         #self.jupiter.draw(self.arcball_camera, self.program, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_program, self.atmosphere_buffer, time_theta)
         #self.draw_planet(self.jupiter, self.program)
         #self.draw_planet(self.saturn, self.program)
@@ -313,6 +317,9 @@ class Application(Widget):
         opengl.glDrawArrays(opengl.GL_TRIANGLES, 0, self.atmosphere_buffer.num_vertices)
 
         opengl.glDepthMask(opengl.GL_TRUE)
+
+class TreeViewButton(Button, TreeViewNode):
+    pass
 
 
 class MainApp(App):

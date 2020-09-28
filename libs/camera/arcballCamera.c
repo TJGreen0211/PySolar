@@ -33,6 +33,13 @@ vec4 getCameraPosition(ArcCamera camera, mat4 position) {
     return camPosition;
 }
 
+void setCameraPosition(ArcCamera *camera, vec3 position) {
+    camera->position.v[0] = position.v[0];
+    camera->position.v[1] = position.v[1];
+    camera->position.v[2] = position.v[2];
+
+}
+
 static void updateCameraVectors(ArcCamera *camera)
 {
     double rad = 180.0 / M_PI;

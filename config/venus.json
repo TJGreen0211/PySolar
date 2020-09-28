@@ -18,8 +18,8 @@
     },
     "textures": {
         "textureMap": "resources/textures/2k_venus_surface.jpg",
-        "normalMap": "",
-        "specularMap": ""
+        "normalMap": "resources/textures/venus_normal_map.png",
+        "specularMap": "resources/textures/venus_specular_map.png"
     },
     "moons": []
 }

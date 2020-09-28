@@ -216,6 +216,37 @@ static PyObject *get_camera_position(PyCameraInterface *self, PyObject *args)
     return  Py_BuildValue("[d,d,d,d]", ret.v[0], ret.v[1], ret.v[2], ret.v[3]);
 }
 
+static PyObject *set_camera_position(PyCameraInterface *self, PyObject *args)
+{
+	PyObject *float_list;
+    int pr_length;
+    double *pr;
+
+	if (!PyArg_ParseTuple(args, "O", &float_list))
+        return NULL;
+
+	pr_length = PyObject_Length(float_list);
+    if (pr_length < 0)
+        return NULL;
+    pr = (double *) malloc(sizeof(double *) * pr_length);
+    if (pr == NULL)
+        return NULL;
+    for (int index = 0; index < pr_length; index++) {
+        PyObject *item;
+        item = PyList_GetItem(float_list, index);
+        if (!PyFloat_Check(item))
+            pr[index] = 0.0;
+        pr[index] = PyFloat_AsDouble(item);
+    }
+
+	vec3 pos = {{pr[0], pr[1], pr[2]}};
+	//printf("%f, %f, %f\n", pos.v[0], pos.v[1], pos.v[2]);
+
+	setCameraPosition(&self->camera, pos);
+
+    Py_RETURN_NONE;
+}
+
 //static PyObject *process_keyboard(PyCameraInterface *self, PyObject *Py_UNUSED(ignored))
 static PyObject *process_keyboard(PyCameraInterface *self, PyObject *args)
 {
@@ -261,6 +292,7 @@ static PyMethodDef Camera_methods[] = {
 	{ "process_mouse_movement", (PyCFunction) process_mouse_movement, METH_VARARGS, "Process mouse input and movement" },
 	{ "process_mouse_scroll", (PyCFunction) process_mouse_scroll, METH_VARARGS, "Process mouse scroll" },
 	{ "camera_model_view_position", (PyCFunction) get_camera_position, METH_VARARGS, "Get camera position relative to the model" },
+	{ "set_view_position", (PyCFunction) set_camera_position, METH_VARARGS, "Sets camera position." },
 	{ "camera_perspective_matrix", (PyCFunction) get_perspective_matrix, METH_VARARGS, "Get perspective matrix" },
 	{NULL, NULL, 0, NULL}		// Sentinal
 };
