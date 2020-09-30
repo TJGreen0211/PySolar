@@ -19,7 +19,6 @@ const float heightScale = 0.01;
 void main()
 {
 	vec3 view_dir = normalize(v_camera_position - v_position);
-	vec3 color = texture(texture1, v_tex_coords).rgb;
 
 	vec3 normal = normalize(v_normal);
 
@@ -36,7 +35,7 @@ void main()
 	}
 
     //FragColor.rgb = pow(fragColor.rgb, vec3(1.0/gamma));
-	vec3 frag_color = vec3(lambertian*(diffuseColor*color) + specular*(specColor*color));
+	vec3 frag_color = vec3(lambertian*(diffuseColor) + specular*(specColor));
 	gl_FragColor = vec4(frag_color, 1.0);
 	//gl_FragColor = vec4(pow(frag_color,vec3(1.0/gamma)), 1.0);
 	//gl_FragColor = vec4(color, 1.0);

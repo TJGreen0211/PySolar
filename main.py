@@ -36,6 +36,7 @@ from shader import Shader
 from buffer import Buffer
 from planet import Planet
 from solarsystem import SolarSystem
+from player import Player
 
 sys.path.insert(1, os.getcwd()+'/bin')
 
@@ -60,7 +61,7 @@ class Application(Widget):
         self._keyboard.bind(on_key_down=self._on_keyboard_down)
 
         self.arcball_camera = camera.Camera()
-        self.perspective_matrix = self.arcball_camera.camera_perspective_matrix(90.0, 640.0/480.0, 0.1, 500.0)
+        self.perspective_matrix = self.arcball_camera.camera_perspective_matrix(90.0, 640.0/480.0, 0.1, 5000.0)
         self.global_time = 0
 
         opengl.glEnable(opengl.GL_CULL_FACE)
@@ -107,6 +108,9 @@ class Application(Widget):
     def on_touch_move(self, touch):
         screen_position = list(touch.spos)
         self.arcball_camera.process_mouse_movement(screen_position[0], screen_position[1], 0)
+
+    def change_scale(self, size):
+        self.solar_system.update_scale(size)
 
 
     def update_glsl(self, *largs):
@@ -179,12 +183,11 @@ class Application(Widget):
 
     def init_shaders(self):
         self.shadow_shader = Shader("shaders/shadow.vert", "shaders/shadow.frag").get_program()
-        self.mesh_shader = Shader("shaders/object.vert", "shaders/object.frag").get_program()
-
 
     def reload_shaders(self):
         #self.atmosphere_program = Shader("shaders/atmosphere.vert", "shaders/atmosphere.frag").get_program()
         self.solar_system.star_shader = Shader("shaders/star.vert", "shaders/star.frag").get_program()
+        self.player.mesh_shader = Shader("shaders/object.vert", "shaders/object.frag").get_program()
         #self.planet_shader = Shader("shaders/planet.vert", "shaders/planet.frag").get_program()
 
         #x = self.earth.planet['model'][0][3]-self.earth.planet['scale']-self.earth.planet['scale']/2.0
@@ -193,22 +196,23 @@ class Application(Widget):
 
 
     def init_objects(self):
-        self.g = geometry.Geometry(subdivisions=1)
+        geom = geometry.Geometry(subdivisions=1)
         
-        self.g.quadcube(10)
-        sphere = np.array(self.g.quadcube_points, dtype=np.float32)
-        sphere_normals = np.array(self.g.quadcube_normals, dtype=np.float32)
-        sphere_tangents = np.array(self.g.quadcube_tangents, dtype=np.float32)
+        geom.quadcube(10)
+        sphere = np.array(geom.quadcube_points, dtype=np.float32)
+        sphere_normals = np.array(geom.quadcube_normals, dtype=np.float32)
+        sphere_tangents = np.array(geom.quadcube_tangents, dtype=np.float32)
         self.sphere_buffer = Buffer(sphere, sphere_normals, sphere_tangents)
 
-        self.g.tetrahedron_sphere(4)
-        atmosphere = np.array(self.g.tetrahedron_points, dtype=np.float32)
-        atmosphere_normals = np.array(self.g.tetrahedron_normals, dtype=np.float32)
+        geom.tetrahedron_sphere(4)
+        atmosphere = np.array(geom.tetrahedron_points, dtype=np.float32)
+        atmosphere_normals = np.array(geom.tetrahedron_normals, dtype=np.float32)
         self.atmosphere_buffer = Buffer(atmosphere, atmosphere_normals)
 
-        self.g.mesh(1)
-        self.mesh_buffer = Buffer(np.array(self.g.mesh_points, dtype=np.float32), np.array(self.g.mesh_normals, dtype=np.float32))
+        geom.mesh(1)
+        mesh_buffer = Buffer(np.array(geom.mesh_points, dtype=np.float32), np.array(geom.mesh_normals, dtype=np.float32))
 
+        self.player = Player(mesh_buffer)
         self.solar_system = SolarSystem()
 
 
@@ -256,34 +260,10 @@ class Application(Widget):
         opengl.glClear(opengl.GL_COLOR_BUFFER_BIT | opengl.GL_DEPTH_BUFFER_BIT)
 
         self.solar_system.draw(self.arcball_camera, self.sphere_buffer, perspective_arr, view_arr, self.atmosphere_buffer, time_theta)
-        self.draw_mesh(self.arcball_camera, self.mesh_shader, self.mesh_buffer, perspective_arr, view_arr)
+        self.player.draw(self.arcball_camera, perspective_arr, view_arr)
 
         opengl.glBindFramebuffer(opengl.GL_FRAMEBUFFER, 0)
         opengl.glDisable(opengl.GL_DEPTH_TEST)
-
-
-    def draw_mesh(self, arcball_camera, shader_program, buffer_object, perspective_arr, view_arr):
-        opengl.glUseProgram(shader_program)
-        opengl.glBindBuffer(opengl.GL_ARRAY_BUFFER, buffer_object.vbo)
-
-        u_loc = opengl.glGetUniformLocation(shader_program, b"projection")
-        opengl.glUniformMatrix4fv(u_loc, 1, False, np.array(perspective_arr).flatten().tobytes())
-        view_loc = opengl.glGetUniformLocation(shader_program, b"view")
-        opengl.glUniformMatrix4fv(view_loc, 1, False, view_arr.flatten().tobytes())
-        model_loc = opengl.glGetUniformLocation(shader_program, b"model")
-        
-        model = np.identity(4, dtype=np.float32)
-        opengl.glUniformMatrix4fv(model_loc, 1, False, model.flatten().tobytes())
-
-        camera_position = arcball_camera.camera_model_view_position(list(model.flatten()))
-        opengl.glUniform3f(opengl.glGetUniformLocation(shader_program, b"camera_position"), camera_position[0], camera_position[1], camera_position[2])
-        opengl.glUniform3f(opengl.glGetUniformLocation(shader_program, b"lightPosition"), 10.0, 5.0, -4.0)
-
-        opengl.glEnableVertexAttribArray(0)
-        opengl.glVertexAttribPointer(0, 3, opengl.GL_FLOAT, False, 12, 0)
-        opengl.glEnableVertexAttribArray(1)
-        opengl.glVertexAttribPointer(1, 3, opengl.GL_FLOAT, False, 12, buffer_object.point_nbytes)
-        opengl.glDrawArrays(opengl.GL_TRIANGLES, 0, buffer_object.num_vertices)
 
 
 class TreeViewButton(Button, TreeViewNode):
@@ -296,6 +276,9 @@ class MainApp(App):
 
     def onButtonPress(self, button):
         self.app.reload_shaders()
+
+    def OnSliderValueChange(self, instance, value):
+        self.app.change_scale(value)
 
     def build(self):
         self.app = Application()
@@ -316,14 +299,16 @@ class MainApp(App):
 
         layout      = GridLayout(cols=1, padding=10)
         #popupLabel  = Label(text  = "Click for pop-up")
-        closeButton = Button(text = "Reload\nShaders", size=(200, 100), on_press=self.onButtonPress)
+        scale_slider = Slider(min=-0, max=100, value=1)
+        scale_slider.bind(value=self.OnSliderValueChange)
+        closeButton = Button(text = "Reload\nShaders", size=(200, 50), on_press=self.onButtonPress)
         #layout.add_widget(Slider(value_track=True, value_track_color=[1, 0, 0, 1]))
         layout.add_widget(tv)
+        layout.add_widget(scale_slider)
         layout.add_widget(closeButton)
         popup = Popup(title='Demo Popup',size_hint=(None, None), size=(200, 400), pos_hint={'top':.97,'right':.97},
                       content=layout, auto_dismiss=False)
         popup.open()  
-        
 
         layout2 = BoxLayout(opacity=0.5)
         #pb = ProgressBar(max=1000, size=(100, 100))

@@ -580,7 +580,7 @@ DLL_EXPORT mat4 mat4Perspective(double fovy, double aspect, double zNear, double
 	//mat4Print(c);
 
 	mat4 c = MAT4_ZERO_MATRIX;
-	double top = tan(fovy*(3.14159265358979323846 / 180.0)/2) * zNear;
+	double top = tan(fovy*(3.14159265358979323846 / 180.0)/2.0) * zNear;
 	double right = top * aspect;
 	c.m[0][0] = zNear/right;
 	c.m[1][1] = zNear/top;

@@ -7,9 +7,8 @@ mat4 getViewMatrix(ArcCamera *camera)
 {
     double rad = 180.0 / M_PI;
     double arc_yaw, arc_pitch;
-
-    //Lock Y direction
-    camera->translation_matrix = mat4Translate(camera->front.v[0]-camera->position.v[0], 0.0, camera->front.v[2]-camera->position.v[2], 0.0);
+    
+    camera->translation_matrix = mat4Translate(camera->mouse_zoom * camera->front.v[0]-camera->position.v[0], camera->mouse_zoom * camera->front.v[1]-camera->position.v[1], camera->mouse_zoom * camera->front.v[2]-camera->position.v[2], 0.0);
     vec3 d = {{camera->front.v[0] - 0.0, camera->front.v[1] - 0.0, camera->front.v[2] - 0.0}};
     d = vec3Normalize(d);
     arc_yaw = asin(-d.v[1]) * rad;
@@ -44,13 +43,27 @@ static void updateCameraVectors(ArcCamera *camera)
 {
     double rad = 180.0 / M_PI;
 
+    //camera->front.v[0] = cos(camera->yaw * rad) * cos(camera->pitch* rad);
+    //camera->front.v[1] = sin(camera->pitch* rad);
+    //camera->front.v[2] = sin(camera->yaw * rad) * cos(camera->pitch* rad);
+
     camera->front.v[0] = cos(camera->yaw * rad) * cos(camera->pitch* rad);
     camera->front.v[1] = sin(camera->pitch* rad);
     camera->front.v[2] = sin(camera->yaw * rad) * cos(camera->pitch* rad);
     camera->front = vec3Normalize(camera->front);
 
-    camera->right = vec3Normalize(crossProduct(camera->front, camera->up));
-    camera->up = vec3Normalize(crossProduct(camera->right, camera->front));
+    camera->right.v[0] = camera->rotation_matrix.m[0][0];    
+    camera->right.v[1] = camera->rotation_matrix.m[0][1];
+    camera->right.v[2] = camera->rotation_matrix.m[0][2];
+    camera->right = vec3Normalize(camera->right);
+
+    camera->up.v[0] = camera->rotation_matrix.m[1][0];    
+    camera->up.v[1] = camera->rotation_matrix.m[1][1];
+    camera->up.v[2] = camera->rotation_matrix.m[1][2];
+    camera->up = vec3Normalize(camera->up);
+
+    //camera->right = vec3Normalize(crossProduct(camera->front, camera->up));
+    //camera->up = vec3Normalize(crossProduct(camera->right, camera->front));
 }
 
 void processKeyboard(ArcCamera *camera, enum Camera_Movement direction, double deltaTime)
@@ -115,10 +128,11 @@ void processMouseMovement(ArcCamera *camera, double xpos, double ypos, int reset
 
 void processMouseScroll(ArcCamera *camera, double yoffset)
 {
-    if (camera->mouse_zoom >= 1.0f && camera->mouse_zoom <= 20.0f)
-        camera->mouse_zoom -= yoffset;
     if (camera->mouse_zoom <= 1.0f)
         camera->mouse_zoom = 1.0f;
     if (camera->mouse_zoom >= 20.0f)
          camera->mouse_zoom = 20.0f;
+
+    camera->mouse_zoom += yoffset*5.0;
+
 }

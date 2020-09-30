@@ -11,6 +11,8 @@ class Planet(object):
         with open(config_path, "r") as cfg_file:
             self.planet_params = json.loads(cfg_file.read())
 
+        self.scale_value = 1.0
+
         self.planet = {}
         self.init_planet(self.planet)
         if self.planet_params['hasAtmosphere']:
@@ -101,6 +103,10 @@ class Planet(object):
 
             temp_moon_dict['model'] = np.dot(np.dot(translation_matrix, rotation_matrix), model)
             planet_dict['moons'].append(temp_moon_dict)
+
+    def update_scale(self, value):
+        self.planet['semimajor_axis'] = self.planet_params['semiMajorAxis']/1000000.0*(value/10.0)
+        self.init_atmosphere_model(self.planet)
             
     def update_planet_model(self, time):
         rotation_matrix = np.identity(4, dtype=np.float32)

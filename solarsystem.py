@@ -11,6 +11,8 @@ class SolarSystem(object):
     def __init__(self):
         self.init_shaders()
 
+        self.solar_system_scale = 1.0
+
         self.sun = {}
         model = np.identity(4, dtype=np.float32)
         self.sun['name'] = 'sun'
@@ -28,6 +30,11 @@ class SolarSystem(object):
 
         self.earth = Planet("config/earth.json")
         self.mars = Planet("config/mars.json")
+
+    def update_scale(self, value):
+        self.solar_system_scale = value
+        self.earth.update_scale(value)
+        self.mars.update_scale(value)
 
 
     def init_shaders(self):
