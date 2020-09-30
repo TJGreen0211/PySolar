@@ -124,6 +124,8 @@ void main (void)
 {
 	vec3 dir = rayDirection(camPosition);
 	vec3 eye = camPosition;
+
+	//vec3 lightPosition = vec3(0.0, 0.0, 0.0);
 	
 	vec3 l = normalize(lightPosition);
 	vec2 e = rayIntersection(eye, dir, fOuterRadius);

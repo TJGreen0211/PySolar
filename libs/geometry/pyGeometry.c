@@ -149,7 +149,6 @@ static PyObject *mesh_get_points(PyGeometryInterface *self, void *closure)
 {
 	PyObject* python_val = PyList_New(self->mesh.vertexNumber*3);
 	int index_count = 0;
-	printf("Mesh vertexNumber: %d", self->mesh.vertexNumber);
 	for (int i = 0; i < self->mesh.vertexNumber; i++)
     {
         PyObject* point_double = Py_BuildValue("d", self->mesh.points[i].v[0]);
@@ -252,15 +251,12 @@ static PyObject *quadcube_sphere(PyGeometryInterface *self, PyObject *args)
 
 static PyObject *mesh_object(PyGeometryInterface *self, PyObject *args)
 {
-	char *filepath;
+	const int face_divisions;
 
-	if (!PyArg_ParseTuple(args, "s*", &filepath))
+	if (!PyArg_ParseTuple(args, "i", &face_divisions))
 		return NULL;
 
-
-    load_object_file(filepath, &self->mesh);
-
-	//printf("filename: %s\n", filepath);
+    load_object_file("C:/Users/wonde/OneDrive/Documents/Programming/PySolar/resources/models/abbadon.obj", &self->mesh);
 
     Py_RETURN_NONE;
 }

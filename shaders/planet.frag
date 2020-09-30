@@ -10,10 +10,11 @@ layout(location = 5) in vec3 v_test;
 uniform sampler2D texture1;
 uniform sampler2D normal_map;
 uniform sampler2D specular_map;
+uniform sampler2D depthmap;
 
 const vec3 diffuseColor = vec3(0.8, 0.8, 1.0);
 const vec3 specColor = vec3(1.0, 1.0, 1.0);
-const float heightScale = 0.04;
+const float heightScale = 0.01;
 
 vec2 parallax_map(vec2 tex_coords, vec3 view_dir) {
 	const float min_layers = 8;
@@ -48,8 +49,8 @@ void main()
 {
 	vec3 view_dir = normalize(v_camera_position - v_position);
 	vec2 tex_coords = parallax_map(v_tex_coords,  view_dir);
-	//if(tex_coords.x > 1.0 || tex_coords.y > 1.0 || tex_coords.x < 0.0 || tex_coords.y < 0.0)
-    //    discard;
+	if(tex_coords.x > 1.0 || tex_coords.y > 1.0 || tex_coords.x < 0.0 || tex_coords.y < 0.0)
+        discard;
 
 	vec3 color = texture(texture1, tex_coords).rgb;
 
@@ -57,7 +58,7 @@ void main()
 	vec3 normal = texture(normal_map, tex_coords).rgb;
 	normal = normalize(normal * 2.0 - 1.0);
 
-	vec3 v_light_position = vec3(0.0, 0.0, 0.0);
+	//vec3 v_light_position = vec3(0.0, 0.0, 0.0);
 	vec3 light_dir = normalize(v_light_position - v_position);
 
 	float lambertian = max(dot(light_dir, normal), 0.0);
@@ -69,6 +70,10 @@ void main()
 		specular = pow(specAngle, 8.0);
 	}
 
-	gl_FragColor = vec4( lambertian*(diffuseColor*color) + specular*(specColor*color), 1.0);
-	//gl_FragColor = vec4(tex_coords, 0.0, 1.0);
+	float gamma = 2.2;
+    //FragColor.rgb = pow(fragColor.rgb, vec3(1.0/gamma));
+	vec3 frag_color = vec3(lambertian*(diffuseColor*color) + specular*(specColor*color));
+	gl_FragColor = vec4(frag_color, 1.0);
+	//gl_FragColor = vec4(pow(frag_color,vec3(1.0/gamma)), 1.0);
+	//gl_FragColor = vec4(color, 1.0);
 }

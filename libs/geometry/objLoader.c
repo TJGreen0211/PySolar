@@ -1,8 +1,10 @@
 #include "objLoader.h"
 
+obj newObj;
+
 void load_object_file(char *fname, obj *mesh)
-{
-	FILE *fp;
+{	
+FILE *fp;
 	fp = fopen(fname, "r");
 	
 	char ch;
@@ -86,8 +88,6 @@ void load_object_file(char *fname, obj *mesh)
 	}
 	
 	fclose(fp);
-
-	printf("HERE\n");
 	
 	//vec3 normals[vertCount*3];
 	//vec3 points[vertCount*3];
@@ -117,6 +117,7 @@ void load_object_file(char *fname, obj *mesh)
 		mesh->normals[Index] = normal; mesh->points[Index] = verts[a]; Index++;
 		mesh->normals[Index] = normal; mesh->points[Index] = verts[b]; Index++;
 		mesh->normals[Index] = normal; mesh->points[Index] = verts[c]; Index++;
+		//printf("%f, %f, %f\n", normal.v[0], normal.v[1], normal.v[2]);
 	}
 	
 	
@@ -127,5 +128,5 @@ void load_object_file(char *fname, obj *mesh)
 	mesh->nsize = Index*sizeof(vec3);
 	mesh->vertexNumber = Index;
 
-	printf("Finished Loading File\n");
+	//printf("Finished Loading File\n");
 }

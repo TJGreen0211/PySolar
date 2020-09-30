@@ -154,7 +154,7 @@ void main()
 
 	vec3 sun = getSunColor(v_camera_position, view_dir, fInnerRadius);
 	if( r > 7.0 ){
-		sun = sun + abs(n1)+abs(n2);
+		sun = sun + abs(n1)+abs(n2)*texture( texture1, v_tex_coords ).rgb;
 		//I = vec3( r * ( 0.75 + brightness * 0.3 ) * orange );
 	}
 	

@@ -104,11 +104,11 @@ class Planet(object):
             
     def update_planet_model(self, time):
         rotation_matrix = np.identity(4, dtype=np.float32)
-        rotation_matrix[2][2] = rotation_matrix[0][0] = math.cos(time/2000.0)
-        rotation_matrix[0][2] = math.sin(time/2000.0)
+        rotation_matrix[2][2] = rotation_matrix[0][0] = math.cos(time)
+        rotation_matrix[0][2] = math.sin(time)
         rotation_matrix[2][0] = -rotation_matrix[0][2]
 
-        self.planet['model'] = np.dot(self.planet['model'], rotation_matrix)
+        self.planet['model'] = np.dot(self.init_planet_model(self.planet), rotation_matrix)
 
         #self.planet['model'][0][3] = self.planet_params['semiMajorAxis']/1000000.0*math.cos(time)
         #self.planet['model'][2][3] = self.planet_params['semiMajorAxis']/1000000.0*math.sin(time)
@@ -124,6 +124,7 @@ class Planet(object):
 
         opengl.glBindBuffer(opengl.GL_ARRAY_BUFFER, buffer_object.vbo)
 
+        self.update_planet_model(time)
         self.draw_sphere_object(arcball_camera, self.planet, shader_program, buffer_object, perspective_arr, view_arr, depthmap)
         self.draw_moons(arcball_camera, shader_program, buffer_object, perspective_arr, view_arr, time, depthmap)
 
