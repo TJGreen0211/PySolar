@@ -1,10 +1,10 @@
 CC = "C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/gcc.exe"
 CFLAGS = -Wall
-PROG = geometry
+PROG = matrixmath
 
 MAKE_DIR = $(PWD)
-SRCS = ring.c quadcube.c objLoader.c
-OBJS = ring.o quadcube.o objLoader.o
+SRCS = matrixMath.c
+OBJS = matrixMath.o
 
 INCLUDE_PATHS = -I C:/Users/wonde/OneDrive/Documents/Programming/PySolar/libs/GLFW
 LIBRARY_PATHS = -L C:/Users/wonde/OneDrive/Documents/Programming/PySolar/libs
@@ -19,7 +19,7 @@ debug_compile : CFLAGS += -DDEBUG
 debug_compile : do_precomp target clean
 
 do_precomp:
-	$(CC) $(CFLAGS) -c $(SRCS)
+	$(CC) $(CFLAGS) -c -o $(OBJS) $(SRCS)
 
 target:
 	ar rcs $(PROG).a $(OBJS)

@@ -20,8 +20,8 @@ const float degToRad = PI / 180.0;
 const float MAX = 10000.0;
 
 const float DEG_TO_RAD = PI / 180.0;
-//float K_R = 0.166;
-//const float K_M = 0.0025;
+//float K_R = 0.166;//Rayleigh constant > thicker
+//const float K_M = 0.0025;//Mie constant > thicker
 //const float E = 14.3;//Sun brightness
 //const vec3 C_R = vec3(0.3, 0.7, 1.0);
 //const float G_M = -0.85;
@@ -104,7 +104,7 @@ float optic(vec3 p, vec3 q) {
 vec3 inScatter(vec3 o, vec3 dir, vec2 e, vec3 l) {
 	float len = (e.y - e.x) / fNumInScatter;
 	vec3 step = dir * len;
-	vec3 p = o + dir * e.x;
+	vec3 p = -o;
 	vec3 v = p + dir * (len * 0.5);
 	
 	vec3 sum = vec3(0.0);
@@ -123,10 +123,10 @@ vec3 inScatter(vec3 o, vec3 dir, vec2 e, vec3 l) {
 
 void main (void)
 {
-	vec3 dir = rayDirection(camera_position);
+	vec3 dir = -rayDirection(camera_position);
 	vec3 eye = camera_position;
-
-	vec3 l = normalize(lightPosition);
+	
+	vec3 l = -normalize(lightPosition);
 	vec2 e = rayIntersection(eye, dir, fOuterRadius);
 	//if ( e.x > e.y ) {
 	//	discard;

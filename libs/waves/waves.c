@@ -5,7 +5,7 @@
 	Public functions:
 	void initializeWaves(waves *water, int dim);
 		Initializes the waves with the desired dimension
-	void generateWaves(waves *water, currentTime);
+	void waves_generate(waves *water, currentTime);
 		Called per frame to generate the x, y, and z textures
 	void cleanupWaves(waves *water);
 		Cleanup the waves
@@ -39,7 +39,7 @@ complexType complexConj(complexType c) {
 	return cConj;
 }
 
-int is_infinity_is_zero_is_denormal(double f) {
+/*static int is_infinity_is_zero_is_denormal(float f) {
   if (f == 0.0f) return 0;
   if (isinf(f)) return 1;
   if (isnan(f)) return 1;
@@ -47,34 +47,34 @@ int is_infinity_is_zero_is_denormal(double f) {
 
   // All that is left is de-normal/sub-normal.
   return 1;
-}
+}*/
 
-vec4 gaussRand() {
-	double noise00 = (double)rand()/(RAND_MAX);
-	double noise01 = (double)rand()/(RAND_MAX);
-	double noise02 = (double)rand()/(RAND_MAX);
-	double noise03 = (double)rand()/(RAND_MAX);
+static vec4 gauss_rand() {
+	float noise00 = (float)rand()/(RAND_MAX);
+	float noise01 = (float)rand()/(RAND_MAX);
+	float noise02 = (float)rand()/(RAND_MAX);
+	float noise03 = (float)rand()/(RAND_MAX);
 
-	double u0 = 2.0*M_PI*noise00;
-	double v0 = (noise01 == 0.0) ? 0.0 : sqrt(-2.0 * log(noise01));
-	double u1 = 2.0*M_PI*noise02;
-	double v1 = (noise03 == 0.0) ? 0.0 : sqrt(-2.0 * log(noise03));
+	float u0 = 2.0*M_PI*noise00;
+	float v0 = (noise01 == 0.0) ? 0.0 : sqrt(-2.0 * log(noise01));
+	float u1 = 2.0*M_PI*noise02;
+	float v1 = (noise03 == 0.0) ? 0.0 : sqrt(-2.0 * log(noise03));
 	vec4 grnd = {{v0*cos(u0), v0 *sin(u0), v1*cos(u1), v1 * sin(u1)}};
 
 	return grnd;
 }
 
-double phillips(vec2 k) {
-	double A = 4.0;
-	double g = 9.81;
+static float phillips(vec2 k) {
+	float A = 4.0;
+	float g = 9.81;
 	vec2 waveDir = {{30.0, 0.0}};
 
-	double k2 = k.v[0] * k.v[0] + k.v[1] * k.v[1];
+	float k2 = k.v[0] * k.v[0] + k.v[1] * k.v[1];
 	if(k2 < 0.0001) k2 = 0.0001;
-	double wV = vec2Length(waveDir);
-	double L = (wV*wV)/g;
-	double dampingVal = 0.0001;
-	double omegaK = vec2Dot(vec2Normalize(waveDir),vec2Normalize(k));
+	float wV = vec2Length(waveDir);
+	float L = (wV*wV)/g;
+	float dampingVal = 0.0001;
+	float omegaK = vec2Dot(vec2Normalize(waveDir),vec2Normalize(k));
 
 	/*
 		Phillips equation
@@ -85,12 +85,12 @@ double phillips(vec2 k) {
 	return A * (exp(-1.0/ (k2 * L * L))/(k2*k2)) * (omegaK*omegaK*omegaK*omegaK) * exp(-k2*L*L*dampingVal*dampingVal);
 }
 
-void initH0(waves *water) {
+static void init_h0(waves_t *water) {
 
-	double L = 2000.0;
+	float L = 2000.0;
 	int offset = 0;
-	for(double N = 0.0; N < water->dimension; N +=1.0) {
-		for(double M = 0.0; M < water->dimension; M +=1.0) {
+	for(float N = 0.0; N < water->dimension; N +=1.0) {
+		for(float M = 0.0; M < water->dimension; M +=1.0) {
 			/*
 					 2pi*n-pi*n  2pi*m-pi*n
 				k =  ----------, ----------
@@ -99,11 +99,11 @@ void initH0(waves *water) {
 			vec2 k = {{2.0*M_PI*N/L, 2.0*M_PI*M/L}};
 
 			/* Generate gaussian random numbers for the starting values. */
-			vec4 grnd = gaussRand();
-			/* h0tilde(k) = 1/sqrt(2)*(gaussRand(real) + gaussRand(im))*sqrt(phillips(k)) */
-			double h0 = 1/sqrt(2.0) * sqrt(phillips(k));
+			vec4 grnd = gauss_rand();
+			/* h0tilde(k) = 1/sqrt(2)*(gauss_rand(real) + gauss_rand(im))*sqrt(phillips(k)) */
+			float h0 = 1/sqrt(2.0) * sqrt(phillips(k));
 			vec2 kNegative = {{-k.v[0], -k.v[1]}};
-			double h0Conj = 1/sqrt(2.0) * sqrt(phillips(kNegative));
+			float h0Conj = 1/sqrt(2.0) * sqrt(phillips(kNegative));
 
 			/* Calculate h0tilde */
 			water->tildeh0k[offset].real = grnd.v[0]*h0; water->tildeh0k[offset].im = grnd.v[1]*h0;
@@ -115,22 +115,22 @@ void initH0(waves *water) {
 	}
 }
 
-void calcH0(double currentTime, waves *water, complexType *dx, complexType *dy, complexType *dz) {
-	double L = 2000.0;
+static void calc_h0(float currentTime, waves_t *water, complexType *dx, complexType *dy, complexType *dz) {
+	float L = 2000.0;
 	int offset = 0;
-	for(double N = 0.0; N < water->dimension; N +=1.0) {
-		for(double M = 0.0; M < water->dimension; M +=1.0) {
+	for(float N = 0.0; N < water->dimension; N +=1.0) {
+		for(float M = 0.0; M < water->dimension; M +=1.0) {
 			vec2 k = {{2.0*M_PI*N/L, 2.0*M_PI*M/L}};
 
-			double magnitude = vec2Length(k);
+			float magnitude = vec2Length(k);
 			if(magnitude < 0.0001) magnitude = 0.0001;
-			double w = sqrt(9.81* magnitude);
+			float w = sqrt(9.81* magnitude);
 
-			double cosinus = cos(w+currentTime);
-			double sinus = sin(w+currentTime);
+			float cosinus = cos(w+currentTime);
+			float sinus = sin(w+currentTime);
 
-			//double cosinus = cos(w);
-			//double sinus = sin(w);
+			//float cosinus = cos(w);
+			//float sinus = sin(w);
 
 			/* Initialize the complex types */
 			complexType expIWT = {cosinus, sinus};
@@ -147,7 +147,7 @@ void calcH0(double currentTime, waves *water, complexType *dx, complexType *dy, 
 	}
 }
 
-void complexBitReverse(complexType *c, unsigned int dim) {
+static void complexbit_reverse(complexType *c, unsigned int dim) {
 	for(unsigned int i = 0, j = 0; i < dim; i++) {
 		if(i < j) {
 			complexType tmp = {c[i].real, c[i].im};
@@ -163,13 +163,13 @@ void complexBitReverse(complexType *c, unsigned int dim) {
 	}
 }
 
-void fft(int dim, complexType *c) {
+static void fft(int dim, complexType *c) {
 	/* Bits in fft have to be reversed to calculate the twiddle indices */
-	complexBitReverse(c, dim);
+	complexbit_reverse(c, dim);
 	int log2n = (int)(log(dim)/log(2));
 
-	double c1 = -1.0;
-	double c2 = 0.0;
+	float c1 = -1.0;
+	float c2 = 0.0;
 	long l2 = 1;
 	long i1;
 
@@ -177,8 +177,8 @@ void fft(int dim, complexType *c) {
 	for(int l = 0; l < log2n; l++) {
 		long l1 = l2;
 		l2 <<= 1;
-		double u1 = 1.0;
-		double u2 = 0.0;
+		float u1 = 1.0;
+		float u2 = 0.0;
 		for(int j = 0; j < l1; j++) {
 			for(int i = j; i < dim; i+=l2) {
 				i1 = i + l1;
@@ -188,7 +188,7 @@ void fft(int dim, complexType *c) {
 				c[i].real += temp.real;
 				c[i].im += temp.im;
 			}
-			double z = u1 * c1 - u2 * c2;
+			float z = u1 * c1 - u2 * c2;
 			u2 = u1 * c2 + u2 * c1;
 			u1 = z;
 		}
@@ -197,13 +197,13 @@ void fft(int dim, complexType *c) {
 		c1 = sqrt((1.0 + c1) / 2.0);
 	}
 	for(int i = 0; i < dim; i++) {
-		c[i].real /= (double)dim;
-		c[i].im /= (double)dim;
+		c[i].real /= (float)dim;
+		c[i].im /= (float)dim;
 	}
 }
 
-void fft2d(int dim, complexType *c) {
-	complexType *row = malloc(dim*2*sizeof(double));
+static void fft2d(int dim, complexType *c) {
+	complexType *row = malloc(dim*2*sizeof(float));
 	int index = 0;
 	int cpIndex = 0;
 
@@ -237,7 +237,7 @@ void fft2d(int dim, complexType *c) {
 	free(row);
 }
 
-void initializeWaves(waves *water, int dim) {
+DLL_EXPORT void waves_init(waves_t *water, int dim) {
 	/*
 		Wave equation: h(k, l, t)
 
@@ -250,18 +250,18 @@ void initializeWaves(waves *water, int dim) {
 
 	/* Allocate the arrays for storing the displacement values */
 	/* 2d grid for dimension * 4 for RGBA values */
-	water->displacementdx = malloc(dim*dim*4*sizeof(double));
-	water->displacementdy = malloc(dim*dim*4*sizeof(double));
-	water->displacementdz = malloc(dim*dim*4*sizeof(double));
+	water->displacementdx = malloc(dim*dim*4*sizeof(float));
+	water->displacementdy = malloc(dim*dim*4*sizeof(float));
+	water->displacementdz = malloc(dim*dim*4*sizeof(float));
 
 	water->tildeh0k = malloc(dim*dim*sizeof(complexType));
 	water->conjTildeh0MK = malloc(dim*dim*sizeof(complexType));
 
 	/* Initialize H0 (the frequency domain) since this part of the equations it only needs to be calculated once. */
-	initH0(water);
+	init_h0(water);
 }
 
-void generateWaves(waves *water, double currentTime) {
+DLL_EXPORT void waves_generate(waves_t *water, float currentTime) {
 	int dim2 = water->dimension*water->dimension;
 
 	/* Allocate the complex type arrays for storing the delta values */
@@ -270,7 +270,7 @@ void generateWaves(waves *water, double currentTime) {
 	complexType *dz = malloc(dim2*sizeof(complexType));
 
 	/* Calculate H0 (in able to get the time domain) per frame to generate moving waves for the x, y and z directions */
-	calcH0(currentTime, water, dx, dy, dz);
+	calc_h0(currentTime, water, dx, dy, dz);
 
 	/* Calculate the 2d ffts for x, y and z directions to obtain the spatial domain*/
 	fft2d(water->dimension, dy);
@@ -285,13 +285,15 @@ void generateWaves(waves *water, double currentTime) {
 	int index = 0;
 	for(int i = 0; i < dim2; i++) {
 		/* Scale the values down to the correct dimension */
-		//double dxh = fabs(dx[i].real/((double)dim2));
-		//double dyh = fabs(dy[i].real/((double)dim2));
-		//double dzh = fabs(dz[i].real/((double)dim2));
+		//float dxh = fabs(dx[i].real/((float)dim2));
+		//float dyh = fabs(dy[i].real/((float)dim2));
+		//float dzh = fabs(dz[i].real/((float)dim2));
 
-		double dxh = dx[i].real;
-		double dyh = dy[i].real;
-		double dzh = dz[i].real;
+		float dxh = dx[i].real;
+		float dyh = dy[i].real;
+		float dzh = dz[i].real;
+
+		//printf("dxh: %f\n", dxh);
 
 		water->displacementdx[index] = dxh;
 		water->displacementdx[index+1] = dxh;
@@ -322,7 +324,7 @@ void generateWaves(waves *water, double currentTime) {
 	free(dz);
 }
 
-void cleanupWaves(waves *water) {
+DLL_EXPORT void waves_dealloc(waves_t *water) {
 	free(water->displacementdx);
 	water->displacementdx = NULL;
 	free(water->displacementdy);

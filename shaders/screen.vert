@@ -4,15 +4,17 @@ uniform mat4 view;
 uniform mat4 model;
 uniform mat4 projection;
 
-layout(location = 0) in vec2 a_position;
+layout(location = 0) in vec3 a_position;
 layout(location = 1) in vec2 a_tex_coords;
 
-layout(location = 0) out vec2 f_tex_coords;
+out vec3 v_color;
+out vec2 v_tex_coords;
 
 void main()
 {
-    f_tex_coords = a_tex_coords;
-    gl_Position = vec4(a_position, 0.0, 1.0)*model*view*projection;
+    v_color = a_position;
+    v_tex_coords = a_tex_coords;
+    gl_Position = vec4(a_position, 1.0);//*model*view*projection;
 }
 
 //#version 450

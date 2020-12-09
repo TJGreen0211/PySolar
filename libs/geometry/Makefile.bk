@@ -2,9 +2,11 @@ CC = "C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/g
 CFLAGS = -Wall
 PROG = geometry
 
+FILE_NAME = $(PROG)
+BIN_DIR = C:/Users/wonde/OneDrive/Documents/Programming/PySolar/bin
 MAKE_DIR = $(PWD)
-SRCS = ring.c quadcube.c objLoader.c
-OBJS = ring.o quadcube.o objLoader.o
+SRCS = ../matrixMath.c ring.c quadcube.c objLoader.c
+OBJS = matrixMath.o ring.o quadcube.o objLoader.o
 
 INCLUDE_PATHS = -I C:/Users/wonde/OneDrive/Documents/Programming/PySolar/libs/GLFW
 LIBRARY_PATHS = -L C:/Users/wonde/OneDrive/Documents/Programming/PySolar/libs
@@ -19,10 +21,12 @@ debug_compile : CFLAGS += -DDEBUG
 debug_compile : do_precomp target clean
 
 do_precomp:
-	$(CC) $(CFLAGS) -c $(SRCS)
+	$(CC) $(CFLAGS) -c $(SRCS) $(INCLUDE_PATHS) $(LIBRARY_PATHS)
 
 target:
-	ar rcs $(PROG).a $(OBJS)
+	$(CC) -shared $(OBJS) $(LIBRARY_PATHS) -o $(PROG).dll
 
 clean:
-	del *.o
+	move $(PROG).dll ../
+	copy "$(PROG).h" "../../include/$(PROG).h"
+	del $(OBJS)

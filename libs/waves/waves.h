@@ -1,30 +1,34 @@
 #ifndef WAVES_H
 #define WAVES_H
-#ifdef __APPLE__
+#ifdef _WIN32
+	#define DLL_EXPORT __declspec(dllexport)
+#else
+	#define DLL_EXPORT
 #endif
 
+
 #include <windows.h>
-#include "../src/matrixMath.h"
+#include "../matrixmath/matrixMath.h"
 
 typedef struct complexType {
-	double real;
-	double im;
+	float real;
+	float im;
 } complexType;
 
-typedef struct waves {
+typedef struct waves_t {
 	int dimension;
-	unsigned int dxTexture;
-	unsigned int dyTexture;
-	unsigned int dzTexture;
-	double *displacementdx;
-	double *displacementdy;
-	double *displacementdz;
+	unsigned int dx_texture;
+	unsigned int dy_texture;
+	unsigned int dz_texture;
+	float *displacementdx;
+	float *displacementdy;
+	float *displacementdz;
 	complexType *tildeh0k;
 	complexType *conjTildeh0MK;
-} waves;
+} waves_t;
 
-void initializeWaves(waves *water, int dim);
-void generateWaves(waves *water, double currentTime);
-void cleanupWaves(waves *water);
+void waves_init(waves_t *water, int dim);
+void waves_generate(waves_t *water, float currentTime);
+void waves_dealloc(waves_t *water);
 
 #endif

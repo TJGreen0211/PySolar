@@ -1,10 +1,11 @@
 CC = "C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/gcc.exe"
 CFLAGS = -Wall
-PROG = geometry
+LIB_NAME=${PWD##*/}
+PROG = waves
 
 MAKE_DIR = $(PWD)
-SRCS = ring.c quadcube.c objLoader.c
-OBJS = ring.o quadcube.o objLoader.o
+SRCS = waves.c
+OBJS = waves.o
 
 INCLUDE_PATHS = -I C:/Users/wonde/OneDrive/Documents/Programming/PySolar/libs/GLFW
 LIBRARY_PATHS = -L C:/Users/wonde/OneDrive/Documents/Programming/PySolar/libs
