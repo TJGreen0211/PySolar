@@ -5,6 +5,8 @@ in vec3 te_tangent;
 in vec3 te_normal;
 in vec3 te_test;
 in vec2 te_tex_coords;
+in vec3 te_camera_position;
+in vec3 te_lightPosition;
 
 const vec3 rock_dark = vec3(0.332, 0.332, 0.332);
 const vec3 rock_light = vec3(0.5312, 0.5312, 0.5312);
@@ -21,54 +23,38 @@ const vec3 forest_light = vec3(0.3359, 0.5976, 0.2656);
 const vec3 forest_dark = vec3(0.1992, 0.4648, 0.332);
 const vec3 ocean = vec3(0.2617, 0.2617, 0.4765);
 
-
 uniform sampler2D texture1;
-uniform sampler2D wave_dx;
-uniform sampler2D wave_dy;
-uniform sampler2D wave_dz;
-
-uniform vec3 camera_position;
-uniform vec3 lightPosition;
 
 const vec3 diffuseColor = vec3(0.8, 0.8, 1.0);
 const vec3 specColor = vec3(1.0, 1.0, 1.0);
 const float heightScale = 0.01;
+const vec3 fog_color = vec3(0.7, 0.6, 1.0);
 
-vec3 applyFog( in vec3  rgb,      // original color of the pixel
-               in float distance, // camera to point distance
-               in vec3  rayOri,   // camera position
-               in vec3  rayDir )  // camera to point vector
+float FogUniform(float dist, float density)
 {
-    float fogAmount = 0.1*exp(-rayOri.y)*(1.0-exp(-distance*rayDir.y))/rayDir.y;
-    vec3  fogColor  = vec3(0.5,0.6,0.7);
-    return mix( rgb, fogColor, fogAmount );
+    return 1.0 - exp(-dist * density);
 }
 
-float getFogFactor(float d)
+vec3 getFogFactor(float d, vec3 color)
 {
-    const float FogMax = 5000.0;
+    const float FogMax = 10000.0;
     const float FogMin = 1.0;
 
-    if (d>=FogMax) return 1;
-    if (d<=FogMin) return 0;
+	float fog0 = 0.50 * FogUniform(d, 0.0010);
 
-    return 1 - (FogMax - d) / (FogMax - FogMin);
+    //if (d>=FogMax) return 0;
+    //if (d<=FogMin) return 0;
+	return mix(color, fog_color, fog0);
 }
 
 void main()
 {
-	//vec2 tex_coords = vec2((atan(te_position.x, te_position.z) / (2.0*3.1415926)) + 0.5, -te_position.y * 0.5 + 0.5);
-	vec3 wave_dx_color = texture(wave_dx, te_tex_coords*2.0).rgb;
-	vec3 wave_dy_color = texture(wave_dy, te_tex_coords*2.0).rgb;
-	vec3 wave_dz_color = texture(wave_dz, te_tex_coords*2.0).rgb;
-	
-	vec3 final_wave_color = (wave_dx_color + wave_dy_color + wave_dz_color)/5.0;
-
 	vec3 color = texture(texture1, te_tex_coords).rgb;
-	vec3 view_dir = normalize(camera_position - te_position);
+	vec3 view_dir = normalize(te_camera_position - te_position);
 	vec3 normal = normalize(te_normal);
+	normal = normalize(normal * 2.0 - 1.0);
 
-	vec3 light_dir = normalize(lightPosition - te_position);
+	vec3 light_dir = normalize(te_lightPosition - te_position);
 
 	float lambertian = max(dot(light_dir, normal), 0.0);
   	float specular = 0.0;
@@ -79,16 +65,7 @@ void main()
 		specular = pow(spec_angle, 8.0);
 	}
 
-	//vec3 fog = applyFog(color, length(camera_position - te_position), camera_position, view_dir);
-	float fog = getFogFactor(length(camera_position - te_position));
-
 	vec3 frag_color = vec3(lambertian*(diffuseColor) + specular*(specColor));
-
-	//gl_FragColor = vec4(mix(frag_color*color, vec3(1.0, 1.0, 1.0), fog), 1.0);
-	//float gamma = 2.2;
-	//gl_FragColor = vec4(pow(frag_color+color, vec3(1.0/gamma)), 1.0);
-	//gl_FragColor = vec4(frag_color+color, 1.0);
-	
 
 	if(length(color) < 0.1) {
 		color = ocean;
@@ -121,8 +98,8 @@ void main()
 		color = snow;
 	}
 
-	//color = normalize(color);
-	
-
-	gl_FragColor = vec4(color, 1.0);
+	vec3 ambient = 0.05 * color;
+	frag_color = (color*(frag_color + ambient));
+	vec3 fog = getFogFactor(length(te_camera_position - te_position), frag_color);
+	gl_FragColor = vec4(frag_color, 1.0);
 }
