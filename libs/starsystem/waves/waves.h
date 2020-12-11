@@ -8,7 +8,7 @@
 
 
 #include <windows.h>
-#include "../matrixmath/matrixMath.h"
+#include "../../matrixmath/matrixMath.h"
 
 typedef struct complexType {
 	float real;

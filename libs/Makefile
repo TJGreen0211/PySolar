@@ -7,12 +7,11 @@ BIN_DIR = C:/Users/wonde/OneDrive/Documents/Programming/PySolar/bin
 MAKE_DIR = $(PWD)
 SRCS = main.c \
 	glad/glad.c \
-	starsystem.c \
+	starsystem/starsystem.a \
 	graphics/graphics.a \
 	matrixmath/matrixmath.a \
 	simplexnoise/simplexnoise.a \
 	camera/camera.a \
-	waves/waves.a \
 	player.c
 OBJS = pyGeometry.o sphere.o matrixMath.o objLoader.o framebuffer.o player.o octree.o
 
@@ -30,6 +29,8 @@ debug_compile : do_precomp target clean
 
 do_precomp:
 	@$(MAKE) -C camera
+	@$(MAKE) -C graphics
+	@$(MAKE) -C starsystem
 	$(CC) $(CFLAGS) -o $(PROG) $(SRCS) $(INCLUDE_PATHS) $(LIBRARY_PATHS)
 
 target:

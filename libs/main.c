@@ -8,7 +8,7 @@ void reload_shader(starsystem *sol) {
     //glDeleteProgram(sol->wave_shader);
     //sol->wave_shader = shader_create_program("../shaders/planet2.vert",
     //    "../shaders/planet2.frag",NULL,NULL,NULL);
-    //glDeleteProgram(sol->planet_shader);
+    glDeleteProgram(sol->planet_shader);
     sol->planet_shader = shader_create_program(
         "../shaders/planet.vert",
         "../shaders/planet.frag",

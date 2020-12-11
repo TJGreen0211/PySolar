@@ -5,7 +5,8 @@
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 #include <stdio.h>
-#include "starsystem.h"
+#include "starsystem/starsystem.h"
+#include "starsystem/planet.h"
 #include "camera/camera.h"
 #include "graphics/framebuffer.h"
 #include "geometry/geometry.h"

@@ -2,27 +2,17 @@
 #define STARSYSTEM_H
 
 #include <windows.h>
-#include "glad/glad.h"
-#include "GLFW/glfw3.h"
 #include <stdio.h>
-#include "geometry/geometry.h"
-#include "graphics/shader.h"
-#include "graphics/buffer.h"
-#include "camera/camera.h"
+#include "planet.h"
 #include "waves/waves.h"
-#include "matrixmath/matrixMath.h"
-#include "simplexnoise/simplexnoise.h"
-
-typedef struct planet_t {
-    float radius;
-    float atmosphere_radius;
-    buffer sphere_faces[6];
-    simplexnoise snoise_face[6];
-    simplexnoise snoise_biomes[6];
-    unsigned int snoise_textures[0];
-    buffer planet_ring;
-    waves_t waves;
-} planet_t;
+#include "../glad/glad.h"
+#include "../GLFW/glfw3.h"
+#include "../geometry/geometry.h"
+#include "../graphics/shader.h"
+#include "../graphics/buffer.h"
+#include "../camera/camera.h"
+#include "../matrixmath/matrixMath.h"
+#include "../simplexnoise/simplexnoise.h"
 
 typedef struct starsystem {
     unsigned int sun_shader;
