@@ -1,10 +1,10 @@
-CC = "C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/gcc.exe"
+CC = gcc
 CFLAGS = -Wall
 PROG = geometry
 
 MAKE_DIR = $(PWD)
-SRCS = ring.c quadcube.c objLoader.c
-OBJS = ring.o quadcube.o objLoader.o
+SRCS = ring.c quadCube.c objLoader.c
+OBJS = ring.o quadCube.o objLoader.o
 
 INCLUDE_PATHS = -I C:/Users/wonde/OneDrive/Documents/Programming/PySolar/libs/GLFW
 LIBRARY_PATHS = -L C:/Users/wonde/OneDrive/Documents/Programming/PySolar/libs
@@ -25,4 +25,4 @@ target:
 	ar rcs $(PROG).a $(OBJS)
 
 clean:
-	del *.o
+	rm *.o

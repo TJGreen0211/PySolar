@@ -20,6 +20,8 @@ const vec3 diffuseColor = vec3(0.8, 0.8, 1.0);
 const vec3 specColor = vec3(1.0, 1.0, 1.0);
 const float heightScale = 0.01;
 
+out vec4 frag_color_out;
+
 const int NUM_STEPS = 3;
 const float PI	 	= 3.141592;
 const float EPSILON	= 1e-3;
@@ -129,14 +131,14 @@ void main()
 	}
 
 	//color += vec3(specular(n,l,eye,60.0));
-	float s = specular(normal, light_dir, view_dir, 60.0);
+	//float s = specular(normal, light_dir, view_dir, 60.0);
 
 	float gamma = 2.2;
     //FragColor.rgb = pow(fragColor.rgb, vec3(1.0/gamma));
 	vec3 frag_color = vec3(lambertian*(diffuseColor) + specular*(specColor));
 
 	vec3 sea = getSeaColor(final_wave_color, normal, light_dir, view_dir, v_camera_position - v_position); 
-	gl_FragColor = vec4(final_wave_color, 1.0);
+	frag_color_out = vec4(final_wave_color, 1.0);
 	//gl_FragColor = vec4(pow(frag_color,vec3(1.0/gamma)), 1.0);
 	//gl_FragColor = vec4(color, 1.0);
 }

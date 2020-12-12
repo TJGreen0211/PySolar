@@ -30,6 +30,8 @@ const vec3 specColor = vec3(1.0, 1.0, 1.0);
 const float heightScale = 0.01;
 const vec3 fog_color = vec3(0.7, 0.6, 1.0);
 
+out vec4 frag_color_out;
+
 float FogUniform(float dist, float density)
 {
     return 1.0 - exp(-dist * density);
@@ -101,5 +103,5 @@ void main()
 	vec3 ambient = 0.05 * color;
 	frag_color = (color*(frag_color + ambient));
 	vec3 fog = getFogFactor(length(te_camera_position - te_position), frag_color);
-	gl_FragColor = vec4(frag_color, 1.0);
+	frag_color_out = vec4(frag_color, 1.0);
 }

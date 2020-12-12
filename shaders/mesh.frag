@@ -17,6 +17,7 @@ const vec3 diffuseColor = vec3(0.8, 0.8, 1.0);
 const vec3 specColor = vec3(1.0, 1.0, 1.0);
 const float heightScale = 0.01;
 
+out vec4 frag_color;
 
 void main()
 {
@@ -44,7 +45,7 @@ void main()
     //FragColor.rgb = pow(fragColor.rgb, vec3(1.0/gamma));
 	vec3 frag_color = vec3(lambertian*(diffuseColor) + specular*(specColor));
 
-	gl_FragColor = vec4(frag_color, 1.0);
+	frag_color = vec4(frag_color, 1.0);
 	//gl_FragColor = vec4(pow(frag_color,vec3(1.0/gamma)), 1.0);
 	//gl_FragColor = vec4(color, 1.0);
 }

@@ -7,12 +7,14 @@
 in vec3 v_color;
 in vec2 v_tex_coords;
 
+out vec4 frag_color;
+
 uniform sampler2D screen_texture;
 
 void main()
 {
     vec3 color = texture(screen_texture, v_tex_coords).rgb;
-    gl_FragColor = vec4(color, 1.0);
+    frag_color = vec4(color, 1.0);
 }
 
 

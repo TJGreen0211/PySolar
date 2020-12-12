@@ -3,7 +3,7 @@
 const float tau = 2.0 * 3.1415926535897;
 
 
-out vec4 FragColor;
+out vec4 frag_color;
 
 uniform float systemTime;
 uniform float offset_x;
@@ -257,7 +257,7 @@ void main() {
     //n = (1 + n - d) / 2.0;
 	}
 
-	FragColor = vec4(vec3(n), 1.0);
+	frag_color = vec4(vec3(n), 1.0);
 
   //FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }

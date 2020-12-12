@@ -1,4 +1,4 @@
-CC = "C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/gcc.exe"
+CC = gcc
 CFLAGS = -Wall
 PROG = main
 
@@ -7,16 +7,17 @@ BIN_DIR = C:/Users/wonde/OneDrive/Documents/Programming/PySolar/bin
 MAKE_DIR = $(PWD)
 SRCS = main.c \
 	glad/glad.c \
-	starsystem/starsystem.a \
-	graphics/graphics.a \
 	matrixmath/matrixmath.a \
-	simplexnoise/simplexnoise.a \
+	starsystem/starsystem.a \
 	camera/camera.a \
-	player.c
-OBJS = pyGeometry.o sphere.o matrixMath.o objLoader.o framebuffer.o player.o octree.o
+	graphics/graphics.a \
+	geometry/geometry.a \
+	simplexnoise/simplexnoise.a
+	#player.c
+#OBJS = pyGeometry.o sphere.o matrixMath.o objLoader.o framebuffer.o player.o octree.o
 
-INCLUDE_PATHS = -I C:/Users/wonde/OneDrive/Documents/Programming/PySolar/libs/GLFW
-LIBRARY_PATHS = -L C:/Users/wonde/OneDrive/Documents/Programming/PySolar/libs -lglfw3 -lopengl32 -lgeometry
+INCLUDE_PATHS = -I $(MAKE_DIR)/GLFW
+LIBRARY_PATHS = -L $(MAKE_DIR) -lglfw -lGL -lm
 
 all : do_precomp
 .PHONY: all
@@ -28,8 +29,11 @@ debug_compile : CFLAGS += -DDEBUG
 debug_compile : do_precomp target clean
 
 do_precomp:
-	@$(MAKE) -C camera
+	#@$(MAKE) -C camera
+	#@$(MAKE) -C matrixmath
+	#@$(MAKE) -C geometry
 	@$(MAKE) -C graphics
+	@$(MAKE) -C simplexnoise
 	@$(MAKE) -C starsystem
 	$(CC) $(CFLAGS) -o $(PROG) $(SRCS) $(INCLUDE_PATHS) $(LIBRARY_PATHS)
 

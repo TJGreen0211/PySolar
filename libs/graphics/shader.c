@@ -42,6 +42,7 @@ GLuint shader_load(char *path, int type)
 	if(success == GL_FALSE) {
 		char log[1024];
 		glGetShaderInfoLog(shader, sizeof(log), 0, log);
+		printf("Shader %s failed to compile\n", path);
 		printf("Shader compile info: \n %s \n", log);
 		glDeleteShader(shader);
 		return 1;

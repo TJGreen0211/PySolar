@@ -1,7 +1,7 @@
 #ifndef STARSYSTEM_H
 #define STARSYSTEM_H
 
-#include <windows.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include "planet.h"
 #include "waves/waves.h"

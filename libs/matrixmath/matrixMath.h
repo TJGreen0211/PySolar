@@ -7,6 +7,13 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+#ifdef _WIN32
+	#define DLL_EXPORT __declspec(dllexport)
+#else
+	#define DLL_EXPORT
+#endif
+
+
 typedef struct matN {
 	float **m;
 } matN;

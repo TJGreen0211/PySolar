@@ -1,16 +1,16 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#include <windows.h>
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
+#include <stdlib.h>
 #include <stdio.h>
 #include "starsystem/starsystem.h"
 #include "starsystem/planet.h"
 #include "camera/camera.h"
 #include "graphics/framebuffer.h"
 #include "geometry/geometry.h"
-#include "player.h"
+//#include "player.h"
 
 
 typedef struct scene {

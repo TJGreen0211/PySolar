@@ -21,6 +21,8 @@ const vec3 specColor = vec3(1.0, 1.0, 1.0);
 const float heightScale = 0.01;
 const float MAX = 10000.0;
 
+out vec4 frag_color;
+
 float snoise(vec3 uv, float res)	// by trisomie21
 {
 	const vec3 s = vec3(1e0, 1e2, 1e4);
@@ -91,5 +93,5 @@ void main()
 
 	vec3 sun = getSunColor(v_camera_position, view_dir, fInnerRadius);
 
-	gl_FragColor = vec4(sun, 1.0);
+	frag_color = vec4(sun, 1.0);
 }

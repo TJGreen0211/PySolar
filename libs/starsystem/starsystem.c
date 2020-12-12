@@ -67,7 +67,7 @@ starsystem *starsystem_init() {
         flip *= -1;
     }
 
-    simplexnoise_init(&s->snoise, 1024, 1024);
+    //simplexnoise_init(&s->snoise, 1024, 1024);
     waves_init(&s->planets[0].waves, 128);
     s->planets[0].waves.dx_texture = create_wave_texture(s->planets[0].waves.dimension);
     s->planets[0].waves.dy_texture = create_wave_texture(s->planets[0].waves.dimension);

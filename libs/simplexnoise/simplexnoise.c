@@ -56,8 +56,8 @@ void simplexnoise_init(simplexnoise *snoise, int width, int height) {
 	glEnableVertexAttribArray(0);
 	glBindVertexArray(0);
 
-    snoise->shader = shader_create_program("C:/Users/wonde/OneDrive/Documents/Programming/PySolar/shaders/noise.vert",
-        "C:/Users/wonde/OneDrive/Documents/Programming/PySolar/shaders/noise.frag",NULL,NULL,NULL);
+    snoise->shader = shader_create_program("../shaders/noise.vert",
+        "../shaders/noise.frag",NULL,NULL,NULL);
 
     char *pixels;
 	int grad3[16][3] = {{0,1,1},{0,1,-1},{0,-1,1},{0,-1,-1},

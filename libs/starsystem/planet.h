@@ -1,7 +1,7 @@
 #ifndef PLANET_H
 #define PLANET_H
 
-#include <windows.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include "waves/waves.h"
 #include "../glad/glad.h"

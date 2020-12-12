@@ -1,5 +1,6 @@
 #ifndef WAVES_H
 #define WAVES_H
+
 #ifdef _WIN32
 	#define DLL_EXPORT __declspec(dllexport)
 #else
@@ -7,7 +8,8 @@
 #endif
 
 
-#include <windows.h>
+#include <stdlib.h>
+#include <string.h>
 #include "../../matrixmath/matrixMath.h"
 
 typedef struct complexType {

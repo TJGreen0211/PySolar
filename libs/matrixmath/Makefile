@@ -1,4 +1,4 @@
-CC = "C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/gcc.exe"
+CC = gcc
 CFLAGS = -Wall
 PROG = matrixmath
 
@@ -7,7 +7,7 @@ SRCS = matrixMath.c
 OBJS = matrixMath.o
 
 INCLUDE_PATHS = -I C:/Users/wonde/OneDrive/Documents/Programming/PySolar/libs/GLFW
-LIBRARY_PATHS = -L C:/Users/wonde/OneDrive/Documents/Programming/PySolar/libs
+LIBRARY_PATHS = -L $(MAKE_DIR) -lm
 
 all : do_precomp target clean
 .PHONY: all
@@ -19,10 +19,10 @@ debug_compile : CFLAGS += -DDEBUG
 debug_compile : do_precomp target clean
 
 do_precomp:
-	$(CC) $(CFLAGS) -c -o $(OBJS) $(SRCS)
+	$(CC) $(CFLAGS) -c -o $(OBJS) $(SRCS) $(LIBRARY_PATHS)
 
 target:
 	ar rcs $(PROG).a $(OBJS)
 
 clean:
-	del *.o
+	rm *.o

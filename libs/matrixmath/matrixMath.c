@@ -6,8 +6,6 @@
 
 #include "matrixMath.h"
 
-#define DLL_EXPORT __declspec(dllexport)
-
 // Converts degrees to radians.
 #define DegreesToRadians (M_PI / 180.0)
 

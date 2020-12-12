@@ -4,7 +4,7 @@ static float delta_time = 0.0;
 static int actionPress, keys;
 static arcball_camera camera;
 
-void reload_shader(starsystem *sol) {
+/*void reload_shader(starsystem *sol) {
     //glDeleteProgram(sol->wave_shader);
     //sol->wave_shader = shader_create_program("../shaders/planet2.vert",
     //    "../shaders/planet2.frag",NULL,NULL,NULL);
@@ -21,7 +21,7 @@ void reload_shader(starsystem *sol) {
         sol->planets[0].snoise_face[i].shader = shader_create_program("../shaders/noise.vert",
             "../shaders/noise.frag",NULL,NULL,NULL);
     }
-}
+}*/
 
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
@@ -169,9 +169,9 @@ int run(void)
 		delta_time = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
-        if (keys == GLFW_KEY_R && actionPress == GLFW_PRESS){
-    	    reload_shader(sol);
-        }
+        //if (keys == GLFW_KEY_R && actionPress == GLFW_PRESS){
+    	//    reload_shader(sol);
+        //}
 
         /* Render here */
     
@@ -186,7 +186,7 @@ int run(void)
             glEnable(GL_DEPTH_TEST);
             glClearColor(0.0f, 0.3f, 0.3f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+        
             //player_draw(player_1, camera, currentFrame, width, height, scene_frambuffer.fbo_id);
             starsystem_draw(sol, camera, currentFrame, width, height, scene_frambuffer.fbo_id);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);

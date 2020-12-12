@@ -1,7 +1,7 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#include <windows.h>
+#include <stdlib.h>
 #include "../glad/glad.h"
 #include "../GLFW/glfw3.h"
 #include "../geometry/geometry.h"
