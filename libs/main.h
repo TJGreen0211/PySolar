@@ -10,7 +10,8 @@
 #include "camera/camera.h"
 #include "graphics/framebuffer.h"
 #include "geometry/geometry.h"
-//#include "player.h"
+#include "player.h"
+#include "graphics/skybox.h"
 
 
 typedef struct scene {

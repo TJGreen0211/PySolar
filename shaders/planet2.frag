@@ -138,7 +138,7 @@ void main()
 	vec3 frag_color = vec3(lambertian*(diffuseColor) + specular*(specColor));
 
 	vec3 sea = getSeaColor(final_wave_color, normal, light_dir, view_dir, v_camera_position - v_position); 
-	frag_color_out = vec4(final_wave_color, 1.0);
+	frag_color_out = vec4(v_normal, 1.0);
 	//gl_FragColor = vec4(pow(frag_color,vec3(1.0/gamma)), 1.0);
 	//gl_FragColor = vec4(color, 1.0);
 }

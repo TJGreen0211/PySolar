@@ -6,7 +6,7 @@ player *player_init() {
     p->mesh_shader = shader_create_program("../shaders/mesh.vert",
         "../shaders/mesh.frag",NULL,NULL,NULL);
     geometry mesh;
-    geometry_load_object_file("C:/Users/wonde/OneDrive/Documents/Programming/PySolar/resources/models/Fighter_1.obj", &mesh);
+    geometry_load_object_file("../resources/models/ship.obj", &mesh);
     p->mesh_buffer = buffer_init(mesh);
     geometry_mesh_dealloc(&mesh);
 
@@ -43,7 +43,7 @@ void player_draw(player *p, arcball_camera camera, float time, int width, int he
         }
     }
     
-    mat4 model = mat4Multiply(mat4Translate(camera.position.v[0], camera.position.v[1], camera.position.v[2], 1.0), mat4RotateY(p->current_rotation) );//mat4ScaleScalar(30.0);
+    mat4 model = mat4Multiply(mat4Translate(camera.position.v[0], camera.position.v[1], camera.position.v[2], 1.0), mat4RotateY(p->current_rotation-180.0) );//mat4ScaleScalar(30.0);
 
     glUniformMatrix4fv(glGetUniformLocation(p->mesh_shader, "projection"), 1, GL_FALSE, &camera.perspective_matrix.m[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(p->mesh_shader, "view"), 1, GL_FALSE, &camera.view_matrix.m[0][0]);

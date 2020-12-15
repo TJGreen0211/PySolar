@@ -48,7 +48,7 @@ starsystem *starsystem_init() {
     }
 
     for(int i = 0; i < 6; i++) {
-        simplexnoise_init(&s->planets[0].snoise_face[i], 1024, 1024);
+        simplexnoise_init(&s->planets[0].snoise_face[i], 512, 512);
         simplexnoise_init(&s->planets[0].snoise_biomes[i], 512, 512);
     }
     int order_array[6][3] = {
@@ -93,6 +93,8 @@ static void load_shaders(starsystem *s) {
         "../shaders/planet.tcsh",
         "../shaders/planet.tesh",
         NULL);
+    //s->planet_shader = shader_create_program("../shaders/planet2.vert",
+    //    "../shaders/planet2.frag",NULL,NULL,NULL);
 }
 
 
@@ -179,7 +181,7 @@ void starsystem_draw(starsystem *s, arcball_camera camera, float time, int width
     waves_generate(&s->planets[0].waves, time);
     planet_draw(s->planets[0], s->planet_shader, camera, time);
     //draw_waves(s, camera, time);
-    draw_atmosphere(s, camera, time);
+    //draw_atmosphere(s, camera, time);
 }
 
 void starsystem_dealloc(starsystem *s) {

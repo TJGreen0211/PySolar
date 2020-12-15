@@ -3,8 +3,10 @@
 static float delta_time = 0.0;
 static int actionPress, keys;
 static arcball_camera camera;
+static skybox space_skybox;
 
-/*void reload_shader(starsystem *sol) {
+
+void reload_shader(starsystem *sol) {
     //glDeleteProgram(sol->wave_shader);
     //sol->wave_shader = shader_create_program("../shaders/planet2.vert",
     //    "../shaders/planet2.frag",NULL,NULL,NULL);
@@ -16,12 +18,18 @@ static arcball_camera camera;
         "../shaders/planet.tesh",
         NULL);
 
-    for(int i = 0; i < 6; i++) {
-        glDeleteProgram(sol->planets[0].snoise_face[i].shader);
-        sol->planets[0].snoise_face[i].shader = shader_create_program("../shaders/noise.vert",
-            "../shaders/noise.frag",NULL,NULL,NULL);
-    }
-}*/
+    //sol->planet_shader = shader_create_program("../shaders/planet2.vert",
+    //    "../shaders/2.frag",NULL,NULL,NULL);
+
+    //for(int i = 0; i < 6; i++) {
+    //    glDeleteProgram(sol->planets[0].snoise_face[i].shader);
+    //    sol->planets[0].snoise_face[i].shader = shader_create_program("../shaders/noise.vert",
+    //        "../shaders/noise.frag",NULL,NULL,NULL);
+    //}
+    //skybox_image_shader = shader_create_program("../shaders/skybox_image.vert",
+    //    "../shaders/skybox_image.frag",NULL,NULL,NULL);
+    //space_skybox = skybox_init(2048);
+}
 
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
@@ -112,6 +120,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
+
 int run(void)
 {
     GLFWwindow* window;
@@ -119,6 +128,9 @@ int run(void)
     /* Initialize the library */
     if (!glfwInit())
         return -1;
+
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
     /* Create a windowed mode window and its OpenGL context */
     glfwWindowHint( GLFW_DOUBLEBUFFER, GL_FALSE );
@@ -131,6 +143,8 @@ int run(void)
     }
     
     /* Make the window's context current */
+
+
     glfwMakeContextCurrent(window);
     glfwSetKeyCallback(window, key_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
@@ -141,9 +155,12 @@ int run(void)
 
     fbo scene_frambuffer;
     framebuffer_init((float)mode->width, (float)mode->height, &scene_frambuffer);
+
+    space_skybox = skybox_init(2048);
+
     arcball_camera_init(&camera, 90.0, (float)mode->width/(float)mode->height, 0.1, 5000.0);
     starsystem *sol = starsystem_init();
-    //player *player_1 = player_init();
+    player *player_1 = player_init();
 
 	float lastFrame = 0.0;
     glViewport(0,0,mode->width,mode->height);
@@ -156,6 +173,9 @@ int run(void)
     /* Loop until the user closes the window */
     int frame_count = 0;
     float time_count = 0.0;
+
+    
+
     while (!glfwWindowShouldClose(window))
     {
         frame_count++;
@@ -169,9 +189,9 @@ int run(void)
 		delta_time = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
-        //if (keys == GLFW_KEY_R && actionPress == GLFW_PRESS){
-    	//    reload_shader(sol);
-        //}
+        if (keys == GLFW_KEY_R && actionPress == GLFW_PRESS){
+    	    reload_shader(sol);
+        }
 
         /* Render here */
     
@@ -186,8 +206,10 @@ int run(void)
             glEnable(GL_DEPTH_TEST);
             glClearColor(0.0f, 0.3f, 0.3f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            skybox_draw(space_skybox, camera);
         
-            //player_draw(player_1, camera, currentFrame, width, height, scene_frambuffer.fbo_id);
+            player_draw(player_1, camera, currentFrame, width, height, scene_frambuffer.fbo_id);
             starsystem_draw(sol, camera, currentFrame, width, height, scene_frambuffer.fbo_id);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -197,6 +219,7 @@ int run(void)
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+    glfwDestroyWindow(window);
 
     glfwTerminate();
     return 0;

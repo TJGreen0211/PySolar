@@ -205,6 +205,33 @@ float octave(int iterations, vec2 coord, float persistence, float scale) {
 }
 
 
+mat2 m2 = mat2( 0.80,  0.60, -0.60,  0.80 );
+
+float terrain( in vec2 p)
+{
+    float rz = 0.;
+    float z = 1.;
+	vec2  d = vec2(0.0);
+    float scl = 2.95;
+    float zscl = -.4;
+    float zz = 5.;
+    for( int i=0; i<5; i++ )
+    {
+        float n = snoise(vec3(p.x, p.y, 1.0));
+        d += pow(abs(n),zz);
+        d -= smoothstep(-.5,1.5,n);
+        zz -= 1.;
+        rz += z*n/(dot(d,d)+.85);
+        z *= zscl;
+        zscl *= .8;
+        p = m2*p*scl;
+    }
+    
+    rz /= smoothstep(1.5,-.5,rz)+.75;
+    return rz;
+}
+
+
 void main() {
 	//vec3 fColor = vec3(texture(texture1, texCoords));
 	float scale = 3.01;
@@ -256,6 +283,8 @@ void main() {
     //n = 
     //n = (1 + n - d) / 2.0;
 	}
+
+  
 
 	frag_color = vec4(vec3(n), 1.0);
 

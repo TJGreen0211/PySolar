@@ -3,8 +3,8 @@ CFLAGS = -Wall
 PROG = graphics
 
 MAKE_DIR = $(PWD)
-SRCS = shader.c buffer.c framebuffer.c
-OBJS = shader.o buffer.o framebuffer.o
+SRCS = shader.c buffer.c framebuffer.c skybox.c
+OBJS = shader.o buffer.o framebuffer.o skybox.o
 
 INCLUDE_PATHS = -I C:/Users/wonde/OneDrive/Documents/Programming/PySolar/libs/GLFW
 LIBRARY_PATHS = -L C:/Users/wonde/OneDrive/Documents/Programming/PySolar/libs

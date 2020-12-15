@@ -21,7 +21,7 @@ static void planet_draw_moon(planet_t p, arcball_camera camera, unsigned int sha
 
     vec4 camera_position = getCameraPosition(camera, model);
     glUniform3f(glGetUniformLocation(shader, "camera_position"), camera_position.v[0], camera_position.v[1], camera_position.v[2]);
-    glUniform3f(glGetUniformLocation(shader, "lightPosition"), 10.0, 5.0, -4.0);
+    glUniform3f(glGetUniformLocation(shader, "lightPosition"), 1000.0, 5.0, -4.0);
     glUniform1f(glGetUniformLocation(shader, "time"), time);
 
     // Noise Texture
@@ -114,7 +114,7 @@ void planet_draw(planet_t planet, unsigned int shader, arcball_camera camera, fl
 
     vec4 camera_position = getCameraPosition(camera, model);
     glUniform3f(glGetUniformLocation(shader, "camera_position"), camera_position.v[0], camera_position.v[1], camera_position.v[2]);
-    glUniform3f(glGetUniformLocation(shader, "lightPosition"), 10.0, 5.0, -4.0);
+    glUniform3f(glGetUniformLocation(shader, "lightPosition"), 1000.0, 5.0, -4.0);
     glUniform1f(glGetUniformLocation(shader, "time"), time);
 
     // Noise Texture
