@@ -38,7 +38,7 @@ void main()
     //v_camera_position = TBN * camera_position;
     //v_light_position = TBN * lightPosition;
 
-    v_position = vec3(vec4(a_position, 1.0)*model).xyz;
+    v_position = vec3(vec4(a_position, 1.0)).xyz;
     v_camera_position = camera_position;
     v_light_position = lightPosition;
 

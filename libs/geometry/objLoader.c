@@ -13,6 +13,26 @@ static char *seperate_line(char **stringp, const char *delim) {
 	return token_start;
 }
 
+void generate_smooth_normals_mesh(geometry *qc) {
+	vec3 *vna = malloc(qc->vertex_number*sizeof(vec3));
+	vec3 vn;
+	for(int i = 0; i < qc->vertex_number; i++) {
+		vec3 tempvn = {{0.0, 0.0, 0.0}};
+		vn = qc->points[i];
+		for(int j = 0; j < qc->vertex_number; j++) {
+			if(vn.v[0] == qc->points[j].v[0] && vn.v[1] == qc->points[j].v[1] && vn.v[2] == qc->points[j].v[2]) {
+				tempvn = vec3PlusEqual(tempvn, qc->normals[j]);
+			}
+		}
+		vna[i] = vec3Normalize(tempvn);
+	}
+
+	for(int i = 0; i < qc->vertex_number; i++) {
+		qc->normals[i] = vna[i];
+	}
+	free(vna);
+}
+
 DLL_EXPORT void geometry_load_object_file(const char *fname, geometry *mesh)
 {
 	printf("Loading: %s\n", fname);
@@ -122,6 +142,8 @@ DLL_EXPORT void geometry_load_object_file(const char *fname, geometry *mesh)
 	}
 	free(verts);
 	free(faces);
+
+	generate_smooth_normals_mesh(mesh);
 
 	mesh->vertex_number = Index;
 	mesh->point_size = Index*sizeof(vec3);

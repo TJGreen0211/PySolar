@@ -19,7 +19,7 @@ void reload_shader(starsystem *sol) {
         NULL);
 
     //sol->planet_shader = shader_create_program("../shaders/planet2.vert",
-    //    "../shaders/2.frag",NULL,NULL,NULL);
+    //    "../shaders/planet2.frag",NULL,NULL,NULL);
 
     //for(int i = 0; i < 6; i++) {
     //    glDeleteProgram(sol->planets[0].snoise_face[i].shader);

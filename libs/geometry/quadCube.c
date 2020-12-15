@@ -231,6 +231,7 @@ DLL_EXPORT void geometry_quadcube_create_face(geometry *quadcube_face, int divis
 		quadcube_face->normals[i+1] = normal;
 		quadcube_face->normals[i+2] = normal;
 	}
+	generate_smooth_normals(quadcube_face);
 
 	generate_tangents(quadcube_face);
 }

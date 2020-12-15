@@ -127,7 +127,7 @@ void main()
 		// Specular
 		vec3 reflectDir = reflect(-light_dir, normal);
 		float specAngle = max(dot(reflectDir, view_dir), 0.0);
-		specular = pow(specAngle, 8.0);
+		specular = pow(specAngle, 16.0);
 	}
 
 	//color += vec3(specular(n,l,eye,60.0));
@@ -137,8 +137,8 @@ void main()
     //FragColor.rgb = pow(fragColor.rgb, vec3(1.0/gamma));
 	vec3 frag_color = vec3(lambertian*(diffuseColor) + specular*(specColor));
 
-	vec3 sea = getSeaColor(final_wave_color, normal, light_dir, view_dir, v_camera_position - v_position); 
-	frag_color_out = vec4(v_normal, 1.0);
+	//vec3 sea = getSeaColor(final_wave_color, normal, light_dir, view_dir, v_camera_position - v_position); 
+	frag_color_out = vec4(frag_color, 1.0);
 	//gl_FragColor = vec4(pow(frag_color,vec3(1.0/gamma)), 1.0);
 	//gl_FragColor = vec4(color, 1.0);
 }

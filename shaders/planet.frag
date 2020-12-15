@@ -49,12 +49,41 @@ vec3 getFogFactor(float d, vec3 color)
 	return mix(color, fog_color, fog0);
 }
 
+vec3 illuminate(float height) {
+	// materials
+	#define c_water vec3(.015, .110, .455)
+	#define c_grass vec3(.086, .132, .018)
+	#define c_beach vec3(.153, .172, .121)
+	#define c_rock  vec3(.080, .050, .030)
+	#define c_snow  vec3(.600, .600, .600)
+
+	// limits
+	#define l_water .05
+	#define l_shore .17
+	#define l_grass .211
+	#define l_rock .351
+
+	float s = smoothstep(.4, 1., height);
+	vec3 rock = mix(c_rock, c_snow, smoothstep(1. - .3*s, 1. - .2*s, height));
+	vec3 grass = mix(c_grass, rock, smoothstep(l_grass, l_rock, height));
+	vec3 shoreline = mix(c_beach, grass, smoothstep(l_shore, l_grass, height));
+	vec3 water = mix(c_water / 2., c_water, smoothstep(0., l_water, height));
+
+	//vec3 L = mul(local_xform, normalize(vec3(1, 1, 0)));
+	//shoreline *= setup_lights(L, normal);
+	//vec3 ocean = setup_lights(L, w_normal) * water;
+
+	vec3 ocean = water;
+	
+	return mix(ocean, shoreline, smoothstep(l_water, l_shore, height));
+}
+
 void main()
 {
 	vec3 color = texture(texture1, te_tex_coords).rgb;
 	vec3 view_dir = normalize(te_camera_position - te_position);
 	vec3 normal = normalize(te_normal);
-	normal = normalize(normal * 2.0 - 1.0);
+	//normal = normalize(normal * 2.0 - 1.0);
 
 	vec3 light_dir = normalize(te_lightPosition - te_position);
 
@@ -64,10 +93,12 @@ void main()
 		// Specular
 		vec3 reflect_dir = reflect(-light_dir, normal);
 		float spec_angle = max(dot(reflect_dir, view_dir), 0.0);
-		specular = pow(spec_angle, 8.0);
+		specular = pow(spec_angle, 16.0);
 	}
 
 	vec3 frag_color = vec3(lambertian*(diffuseColor) + specular*(specColor));
+
+	//color = illuminate(color);
 
 	if(length(color) < 0.1) {
 		color = ocean;

@@ -114,9 +114,14 @@ void main()
 	//vec3 p2 = gl_TessCoord.z * tc_position[2];
 	//vec3 tePosition = p0 + p1 + p2;
 
-	te_position = TBN *  vec3(vec4(height, 1.0)*model).xyz;
-    te_camera_position = TBN * camera_position;
-    te_lightPosition = TBN * lightPosition;
+	//te_position = TBN *  vec3(vec4(position, 1.0)).xyz;
+    //te_camera_position = TBN * camera_position;
+    //te_lightPosition = TBN * lightPosition;
+
+	te_position = vec3(vec4(position, 1.0)).xyz;
+    te_camera_position = camera_position;
+    te_lightPosition = lightPosition;
+	te_normal = lerp3D(tc_normal[0],tc_normal[1],tc_normal[2]);
 
 
 	gl_Position = vec4(height, 1.0)*model*view*projection;
