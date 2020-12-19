@@ -162,7 +162,7 @@ void simplexnoise_init(simplexnoise *snoise, int width, int height) {
 }
 
 
-void render_simplexnoise_texture(simplexnoise *snoise, float time, float seed_x, float seed_y, int order[3], int reverse) {
+void render_simplexnoise_texture(simplexnoise *snoise, float scale, float time, float seed_x, float seed_y, int order[3], int reverse) {
     //glViewport(0, 0, snoise->width, snoise->height);
 
     glBindFramebuffer(GL_FRAMEBUFFER, snoise->noise_fboid);
@@ -194,6 +194,8 @@ void render_simplexnoise_texture(simplexnoise *snoise, float time, float seed_x,
     glUniform1f(glGetUniformLocation(snoise->shader, "offset_x"), seed_x);
     glUniform1f(glGetUniformLocation(snoise->shader, "offset_y"), seed_y);
     glUniform1f(glGetUniformLocation(snoise->shader, "zoom"), 1.0);
+    glUniform1f(glGetUniformLocation(snoise->shader, "terrain_scale"), scale);
+    
     glUniform1i(glGetUniformLocation(snoise->shader, "animated"), 1);
 
     glUniform1i(glGetUniformLocation(snoise->shader, "reverse"), reverse);

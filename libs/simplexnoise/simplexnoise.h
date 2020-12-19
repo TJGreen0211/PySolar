@@ -24,7 +24,7 @@ typedef struct simplexnoise {
 } simplexnoise;
 
 void simplexnoise_init(simplexnoise *snoise, int width, int height);
-void render_simplexnoise_texture(simplexnoise *snoise, float time, float seed_x, float seed_y, int order[3], int reverse);
+void render_simplexnoise_texture(simplexnoise *snoise, float scale, float time, float seed_x, float seed_y, int order[3], int reverse);
 
 #define BUFFER_OFFSET(offset) ((char*)NULL+(offset))
 

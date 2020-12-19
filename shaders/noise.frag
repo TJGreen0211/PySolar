@@ -8,6 +8,7 @@ out vec4 frag_color;
 uniform float systemTime;
 uniform float offset_x;
 uniform float offset_y;
+uniform float terrain_scale;
 
 uniform float e0;
 uniform float e1;
@@ -199,12 +200,6 @@ float snoise(vec3 P) {
   return 20.0 * (n0 + n1 + n2 + n3);
 }
 
-float octave(int iterations, vec2 coord, float persistence, float scale) {
-	float noise = snoise(coord*scale);
-	return noise;
-}
-
-
 mat2 m2 = mat2( 0.80,  0.60, -0.60,  0.80 );
 
 float terrain( in vec2 p)
@@ -231,62 +226,43 @@ float terrain( in vec2 p)
     return rz;
 }
 
+const mat2 m = mat2(0.8,-0.6,0.6,0.8);
+
+float terrain_fbm(vec2 p ) {
+    float a = 0.0;
+    float b = 1.0;
+    vec2  d = vec2(0.0);
+    for( int i=0; i<15; i++ )
+    {
+        float f = snoise(p);
+        vec3 n=vec3(f, f, f);
+        d +=n.yz;
+        a +=b*n.x/(1.0+dot(d,d));
+        b *=0.5;
+        p=m*p*2.0;
+    }
+    return a;
+  }
+
 
 void main() {
-	//vec3 fColor = vec3(texture(texture1, texCoords));
-	float scale = 3.01;
-	float n = 0.0;
-	int octaves = 3;
-	float lacunarity = 2.0;
-	float gain = 0.5;
-	float amplitude = 0.5;
-	float frequency = 1.0;
+	//float scale = terrain_scale;
+  float scale = 2.71;
 
-	if(animated == 0) {
-		float nx = gl_FragCoord.x/1024.0 * 10.0;
-		float ny = gl_FragCoord.y/512.0 * 10.0;
-		vec2 st = vec2(nx, ny);
-		for(int i = 0; i < octaves; i++) {
-			n += amplitude * snoise(st);
-			st *= 2.0;
-			amplitude *= 0.5;
-		}
-		n = snoise((systemTime/10.0+vec2(nx, ny)));
-	}
-	else {
-		//n = snoise(gl_FragCoord.xy*scale);
-		float nx = (gl_FragCoord.x/1024.0) * scale;
-		float ny = (gl_FragCoord.y/1024.0) * scale;
-    float nz = 0.0;
+  //n = (
+  //         e0 * snoise(vec3( 1.0 * nx,  1.0 * ny, 0.0))
+  //       + 0.50 * snoise(vec3( 2.0 * nx,  2.0 * ny, 0.0))
+  //       + 0.25 * snoise(vec3( 4.0 * nx,  4.0 * ny, 0.0))
+  //       + 0.13 * snoise(vec3( 8.0 * nx,  8.0 * ny, 0.0))
+  //       + 0.06 * snoise(vec3(16.0 * nx, 16.0 * ny, 0.0))
+  //       + 0.03 * snoise(vec3(32.0 * nx, 32.0 * ny, 0.0)));
+  //n /= (1.00+0.50+0.25+0.13+0.06+0.03);
 
-    vec3 face = vec3(nx, ny, nz);
-    int a[3] = int[](order_x, order_y, order_z);
-
-
-    n = (
-             e0 * snoise(vec3( 1.0 * nx,  1.0 * ny, 0.0))
-           + 0.50 * snoise(vec3( 2.0 * nx,  2.0 * ny, 0.0))
-           + 0.25 * snoise(vec3( 4.0 * nx,  4.0 * ny, 0.0))
-           + 0.13 * snoise(vec3( 8.0 * nx,  8.0 * ny, 0.0))
-           + 0.06 * snoise(vec3(16.0 * nx, 16.0 * ny, 0.0))
-           + 0.03 * snoise(vec3(32.0 * nx, 32.0 * ny, 0.0)));
-    n /= (1.00+0.50+0.25+0.13+0.06+0.03);
-
-    //n = 1.00 * snoise(vec3(face[a[0]], face[a[1]], face[a[2]]));
-
-		//n = 1.0 * snoise(vec2(nx, ny)) +
-		//	0.5 * snoise(4.0 * vec2(nx, ny)) +
-		//	0.25 * snoise(8.0 * vec2(nx, ny));
-    //float d = 2.0 * max(abs(nx), abs(ny));
-		n = pow(n, 1.7);
-    //n = snoise(vec3(nx, ny, 1.0));
-    //n = 
-    //n = (1 + n - d) / 2.0;
-	}
-
-  
+  float nx1 = gl_FragCoord.x/4096.0 * scale;
+	float ny1 = gl_FragCoord.y/4096.0 * scale;
+  float n = terrain_fbm(vec2(nx1, ny1));
+  //n = pow(n, 1.7);
 
 	frag_color = vec4(vec3(n), 1.0);
 
-  //FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }
