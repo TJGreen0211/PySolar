@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 #include "planet.h"
 #include "waves/waves.h"
 #include "../glad/glad.h"

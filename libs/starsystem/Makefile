@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = -Wall -Wno-unused-function
 LIB_NAME=${PWD##*/}
 PROG = starsystem
 

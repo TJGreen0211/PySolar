@@ -3,21 +3,34 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "../matrixmath/matrixMath.h"
+#include <math.h>
 
+typedef struct quadtree_cell quadtree_cell;
 typedef struct quadtree_node quadtree_node;
 typedef struct quadtree_point quadtree_point;
 typedef struct quadtree quadtree;
 
 struct quadtree_point {
-    int x;
-    int y;
+    float x;
+    float y;
+};
+
+struct quadtree_cell {
+    quadtree_point center;
+    quadtree_point distance;
+    quadtree_point *point;
 };
 
 
 struct quadtree_node {
-    
-    quadtree_point position;
+    int max_depth;
+    int current_depth;
+    float width;
+    float height;
+    float scale;
+
+    quadtree_point center;
+
     quadtree_node *ne;
     quadtree_node *nw;
     quadtree_node *se;
@@ -31,14 +44,12 @@ struct quadtree_node {
 
 struct quadtree {
     quadtree_node *root;
-
-    quadtree_point top_left;
-    quadtree_point bot_right;
-
-    
 };
 
-
-void quadtree_insert(quadtree_node *node, quadtree tree);
+int quadtree_node_is_leaf(quadtree_node *node);
+void quadtree_print_node(quadtree_node *node);
+quadtree_node *quadtree_create(float scale, int max_depth, quadtree_point point);
+void quadtree_node_insert(quadtree_node *node, quadtree_point point);
+void quadtree_search(quadtree_node *node);
 
 #endif

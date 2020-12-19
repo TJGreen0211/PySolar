@@ -18,6 +18,29 @@ void reload_shader(starsystem *sol) {
         "../shaders/planet.tesh",
         NULL);
 
+    for(int i = 0; i < 6; i++) {
+    glDeleteProgram(sol->planets[0].snoise_face[i].shader);
+    sol->planets[0].snoise_face[i].shader = shader_create_program("../shaders/noise.vert",
+        "../shaders/noise.frag",NULL,NULL,NULL);
+    }
+    int order_array[6][3] = {
+        {0, 1, 2},
+        {0, 1, 2},
+        {2, 0, 1},
+        {2, 0, 1},
+        {1, 2, 0},
+        {1, 2, 0}
+    };
+    int flip = 1;
+
+    for(int i = 0; i < 6; i++) {
+        render_simplexnoise_texture(&sol->planets[0].snoise_face[i], 1.1, 0.0, i*512.0, i*512.0, order_array[i], flip);
+        //render_simplexnoise_texture(&s->planets[0].snoise_biomes[i], 0.0, i*s->snoise.width, i*s->snoise.height, order_array[i], flip);
+        //s->planets[0].snoise_textures[i] = s->snoise.render_texture;
+        flip *= -1;
+    }
+
+
     //sol->planet_shader = shader_create_program("../shaders/planet2.vert",
     //    "../shaders/planet2.frag",NULL,NULL,NULL);
 
@@ -174,8 +197,6 @@ int run(void)
     int frame_count = 0;
     float time_count = 0.0;
 
-    
-
     while (!glfwWindowShouldClose(window))
     {
         frame_count++;
@@ -229,4 +250,12 @@ int main(int argc, char *argv[]) {
     int exit_status = run();
     printf("exit(%d)\n", exit_status);
     return exit_status;
+
+    //quadtree_point p;
+    //p.x = 700.0;
+    //p.y = 700.0;
+    //quadtree_node *qt = quadtree_create(100.0, 100.0, 5, p);
+    //printf("Quadtree created\n");
+    //quadtree_search(qt);
+    //return 0;
 }

@@ -48,7 +48,7 @@ starsystem *starsystem_init() {
     }
 
     for(int i = 0; i < 6; i++) {
-        simplexnoise_init(&s->planets[0].snoise_face[i], 512, 512);
+        simplexnoise_init(&s->planets[0].snoise_face[i], 4096, 4096);
         simplexnoise_init(&s->planets[0].snoise_biomes[i], 512, 512);
     }
     int order_array[6][3] = {
@@ -60,12 +60,18 @@ starsystem *starsystem_init() {
         {1, 2, 0}
     };
     int flip = 1;
+
+    clock_t tic = clock();
+
     for(int i = 0; i < 6; i++) {
-        render_simplexnoise_texture(&s->planets[0].snoise_face[i], 0.0, i*s->snoise.width, i*s->snoise.height, order_array[i], flip);
-        render_simplexnoise_texture(&s->planets[0].snoise_biomes[i], 0.0, i*s->snoise.width, i*s->snoise.height, order_array[i], flip);
+        render_simplexnoise_texture(&s->planets[0].snoise_face[i], 1.1, 0.0, i*s->snoise.width, i*s->snoise.height, order_array[i], flip);
+        //render_simplexnoise_texture(&s->planets[0].snoise_biomes[i], 0.0, i*s->snoise.width, i*s->snoise.height, order_array[i], flip);
         //s->planets[0].snoise_textures[i] = s->snoise.render_texture;
         flip *= -1;
     }
+
+    clock_t toc = clock();
+    printf("Noise faces created in: %f seconds\n", (double)(toc - tic) / CLOCKS_PER_SEC);
 
     //simplexnoise_init(&s->snoise, 1024, 1024);
     waves_init(&s->planets[0].waves, 128);
@@ -118,9 +124,9 @@ static unsigned int create_wave_texture(int wave_patch_dimension) {
 static void draw_atmosphere(starsystem *s, arcball_camera camera, float time) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
-    float atmosphere_scale_value = s->planets[0].atmosphere_radius;
+    float atmosphere_scale_value = 100.0*1.5;
 
-    mat4 model = mat4Multiply(mat4Translate(350.0, 0.0, 0.0, 1.0), mat4ScaleScalar(atmosphere_scale_value));
+    mat4 model = mat4Multiply(mat4Translate(0.0, 0.0, 0.0, 1.0), mat4ScaleScalar(atmosphere_scale_value));
     vec4 camera_position = getCameraPosition(camera, model);
 
     unsigned int shader_program;
@@ -138,10 +144,10 @@ static void draw_atmosphere(starsystem *s, arcball_camera camera, float time) {
     glUniformMatrix4fv(glGetUniformLocation(shader_program, "model"), 1, GL_FALSE, &model.m[0][0]);
 
     glUniform3f(glGetUniformLocation(shader_program, "camera_position"), camera_position.v[0], camera_position.v[1], camera_position.v[2]);
-    glUniform3f(glGetUniformLocation(shader_program, "lightPosition"), 10.0, 5.0, -4.0);
+    glUniform3f(glGetUniformLocation(shader_program, "lightPosition"), -1000.0, 5.0, -4.0);
 
     // Atmosphere constants
-    glUniform1f(glGetUniformLocation(shader_program, "fInnerRadius"), s->planets[0].radius);
+    glUniform1f(glGetUniformLocation(shader_program, "fInnerRadius"), 100.0);
     glUniform1f(glGetUniformLocation(shader_program, "fOuterRadius"), atmosphere_scale_value);
     glUniform3f(glGetUniformLocation(shader_program, "C_R"), 0.3, 0.1, 1.0);
     glUniform1f(glGetUniformLocation(shader_program, "K_R"), 0.166);
@@ -179,9 +185,9 @@ void starsystem_draw(starsystem *s, arcball_camera camera, float time, int width
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
     
     waves_generate(&s->planets[0].waves, time);
-    planet_draw(s->planets[0], s->planet_shader, camera, time);
+    planet_draw(s->planets[0], s->planet_shader, camera, time, framebuffer);
     //draw_waves(s, camera, time);
-    //draw_atmosphere(s, camera, time);
+    draw_atmosphere(s, camera, time);
 }
 
 void starsystem_dealloc(starsystem *s) {

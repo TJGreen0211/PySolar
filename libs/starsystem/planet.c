@@ -1,9 +1,10 @@
 #include "planet.h"
 
+static int faces_drawn = 0;
 
-//static float point_distance(float u[3], float v[3]) {
-//	return sqrt((v[0] - u[0])*(v[0] - u[0]) + (v[1] - u[1])*(v[1] - u[1]) + (v[2] - u[2])*(v[2] - u[2]));
-//}
+static float point_distance(float u[3], float v[3]) {
+	return sqrt((v[0] - u[0])*(v[0] - u[0]) + (v[1] - u[1])*(v[1] - u[1]) + (v[2] - u[2])*(v[2] - u[2]));
+}
 
 static void planet_draw_moon(planet_t p, arcball_camera camera, unsigned int shader, float time) {
     glUseProgram(shader);
@@ -21,7 +22,7 @@ static void planet_draw_moon(planet_t p, arcball_camera camera, unsigned int sha
 
     vec4 camera_position = getCameraPosition(camera, model);
     glUniform3f(glGetUniformLocation(shader, "camera_position"), camera_position.v[0], camera_position.v[1], camera_position.v[2]);
-    glUniform3f(glGetUniformLocation(shader, "lightPosition"), 1000.0, 5.0, -4.0);
+    glUniform3f(glGetUniformLocation(shader, "lightPosition"), -1000.0, 5.0, -4.0);
     glUniform1f(glGetUniformLocation(shader, "time"), time);
 
     // Noise Texture
@@ -103,26 +104,65 @@ static void draw_waves(starsystem *s, arcball_camera camera, float time) {
     }
 }*/
 
+static void planet_draw_quadtree(quadtree_node *node, planet_t planet, unsigned int shader, arcball_camera camera, int order[3], int face_index, float flip) {
+    if(quadtree_node_is_leaf(node)) {
+        faces_drawn++;
+        //quadtree_print_node(node);
+        glUseProgram(shader);
 
-void planet_draw(planet_t planet, unsigned int shader, arcball_camera camera, float time) {
-    glUseProgram(shader);
+        //printf("width: %f, center: (%f, %f)\n", node->width, node->center.x, node->center.y);
+        float translate_order[3] = {node->center.x, node->center.y, ((node->width/2.0)*flip)-(1.0)*flip};
+        
+        mat4 model = mat4Multiply(mat4Translate(0.0, 0.0, 0.0, 1.0), mat4ScaleScalar(100.0));
+        mat4 translation = mat4Multiply(mat4Translate(translate_order[order[0]], translate_order[order[1]], translate_order[order[2]], 1.0), mat4ScaleScalar(node->width/2.0));
 
-    mat4 model = mat4Multiply(mat4Multiply(mat4Translate(350.0, 0.0, 0.0, 1.0), mat4ScaleScalar(planet.radius)), mat4RotateY(1.0));
-    glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, &camera.perspective_matrix.m[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, &camera.view_matrix.m[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, &model.m[0][0]);
+        printf("Scale: %f, Translation: (%f, %f, %f)\n", node->width/2.0, translate_order[0], translate_order[1], translate_order[2]);
 
-    vec4 camera_position = getCameraPosition(camera, model);
-    glUniform3f(glGetUniformLocation(shader, "camera_position"), camera_position.v[0], camera_position.v[1], camera_position.v[2]);
-    glUniform3f(glGetUniformLocation(shader, "lightPosition"), 1000.0, 5.0, -4.0);
-    glUniform1f(glGetUniformLocation(shader, "time"), time);
+        //mat4 translation = mat4Translate(350.0+(node->width/2.0), node->center.x, node->center.y, 1.0);
+        //mat4 position = mat4Multiply(
+        //    //mat4Translate(values[order_array[5][0]], values[order_array[5][1]], values[order_array[5][2]], 1.0), 
+        //    //mat4Scale(scale_values[order_array[5][0]], scale_values[order_array[5][1]], scale_values[order_array[5][2]], 1.0)
+        //    mat4Translate(0.0, translate_array[j][0], translate_array[j][1], 1.0),
+        //    mat4Scale(1.0, quad_scale, quad_scale, 1.0)
+        //);
+        //mat4 position = mat4Translate((node->width/2.0), node->center.x, node->center.y, 1.0);
+        //model = mat4Multiply(model, position);
+        
+        glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, &camera.perspective_matrix.m[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, &camera.view_matrix.m[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, &model.m[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(shader, "translation"), 1, GL_FALSE, &translation.m[0][0]);
 
-    // Noise Texture
-    //glActiveTexture(GL_TEXTURE1);
-    //glBindTexture(GL_TEXTURE_2D, s->snoise.render_texture);
-    //glBindTexture(GL_TEXTURE_2D, planet.snoise_textures[i]);
-    glUniform1i(glGetUniformLocation(shader, "texture1"), 1);
+        vec4 camera_position = getCameraPosition(camera, model);
+        glUniform3f(glGetUniformLocation(shader, "camera_position"), camera_position.v[0], camera_position.v[1], camera_position.v[2]);
+        glUniform3f(glGetUniformLocation(shader, "lightPosition"), -1000.0, 500.0, -400.0);
+        glUniform1f(glGetUniformLocation(shader, "time"), 1.0);
+        glUniform1f(glGetUniformLocation(shader, "scale"), node->width/2.0);
+        glUniform1f(glGetUniformLocation(shader, "translate_x"), translate_order[0]);
+        glUniform1f(glGetUniformLocation(shader, "translate_y"), translate_order[1]);
 
+        glUniform1i(glGetUniformLocation(shader, "texture1"), 1);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, planet.snoise_face[face_index].render_texture);
+        glActiveTexture(GL_TEXTURE0);
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glBindVertexArray(planet.sphere_faces[face_index].vao);
+        glPatchParameteri(GL_PATCH_VERTICES, 3);
+	    glDrawArrays(GL_PATCHES, 0, planet.sphere_faces[face_index].vertex_number);
+
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    } else {
+        planet_draw_quadtree(node->nw, planet, shader, camera, order, face_index, flip);
+        planet_draw_quadtree(node->ne, planet, shader, camera, order, face_index, flip);
+        planet_draw_quadtree(node->sw, planet, shader, camera, order, face_index, flip);
+        planet_draw_quadtree(node->se, planet, shader, camera, order, face_index, flip);
+    }
+}
+
+
+void planet_draw(planet_t planet, unsigned int shader, arcball_camera camera, float time, unsigned int framebuffer) {
+    /*mat4 model = mat4Multiply(mat4Multiply(mat4Translate(350.0, 0.0, 0.0, 1.0), mat4ScaleScalar(planet.radius)), mat4RotateY(1.0));
     // Update wave textures from the genereated wave patch
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, planet.waves.dx_texture);
@@ -135,106 +175,57 @@ void planet_draw(planet_t planet, unsigned int shader, arcball_camera camera, fl
     glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D, planet.waves.dz_texture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, planet.waves.dimension, planet.waves.dimension, GL_RGBA, GL_FLOAT, planet.waves.displacementdz);
-    glUniform1i(glGetUniformLocation(shader, "wave_dz"), 4);
+    glUniform1i(glGetUniformLocation(shader, "wave_dz"), 4);*/
 
-    glActiveTexture(GL_TEXTURE0);
+    int order_array[6][3] = {
+        {0, 1, 2},
+        {0, 1, 2},
+        {1, 2, 0},
+        {1, 2, 0},
+        {2, 0, 1},
+        {2, 0, 1},
+    };
 
+    int order_array2[6][3] = {
+        {0, 1, 2},
+        {0, 1, 2},
+        {2, 0, 1},
+        {2, 0, 1},
+        {1, 2, 0},
+        {1, 2, 0}
+    };
 
-    for(int i = 0; i < 6; i++) {
-        glActiveTexture(GL_TEXTURE1);
-        //glBindTexture(GL_TEXTURE_2D, s->snoise.render_texture);
-        glBindTexture(GL_TEXTURE_2D, planet.snoise_face[i].render_texture);
-        glActiveTexture(GL_TEXTURE0);
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glBindVertexArray(planet.sphere_faces[i].vao);
-        glPatchParameteri(GL_PATCH_VERTICES, 3);
-	    glDrawArrays(GL_PATCHES, 0, planet.sphere_faces[i].vertex_number);
-    }
-    
-/*
-    //int order_array[6][3] = {
-    //    {0, 1, 2},
-    //    {0, 1, 2},
-    //    {2, 0, 1},
-    //    {2, 0, 1},
-    //    {1, 2, 0},
-    //    {1, 2, 0}
-    //};
-    
-    float quad_scale = 0.5;
-    float model_scale = 350.0;
-    float center[3] = {0.0, 0.0, 0.0};
-    camera_position = getCameraPosition(camera, model);
-
-    vec2 asdf = {{camera_position.v[1], camera_position.v[2]}};
-    asdf = vec2Normalize(asdf);
-
-    //printf("Dist: %f, cam: %f, %f, %f normalized: {%f, %f}\n",  camera_position.v[0], camera_position.v[1], camera_position.v[2], asdf.v[0], asdf.v[1]);
+    vec4 camera_position = getCameraPosition(camera, mat4IdentityMatrix());
     float cam[3] = {camera_position.v[0], camera_position.v[1], camera_position.v[2]};
-    //for(int i = 0; i < 2; i++) {
-        //float translate_array[4][3] = {
-        //    {(center[0] + quad_scale)*model_scale, (center[1] - quad_scale)*model_scale, 0.0},
-        //    {(center[0] + quad_scale)*model_scale, (center[1] + quad_scale)*model_scale, 0.0},
-        //    {(center[0] - quad_scale)*model_scale, (center[1] - quad_scale)*model_scale, 0.0},
-        //    {(center[0] - quad_scale)*model_scale, (center[1] + quad_scale)*model_scale, 0.0},
-        //};
-        float translate_array[4][3] = {
-            {(center[0] + quad_scale)*planet.radius, (center[1] - quad_scale)*planet.radius, 0.0},
-            {(center[0] + quad_scale)*planet.radius, (center[1] + quad_scale)*planet.radius, 0.0},
-            {(center[0] - quad_scale)*planet.radius, (center[1] - quad_scale)*planet.radius, 0.0},
-            {(center[0] - quad_scale)*planet.radius, (center[1] + quad_scale)*planet.radius, 0.0},
-        };
-
-
-        float center_model_translation[3] = {center[0]-model_scale, center[1], center[2]};
-        //printf("Dist: %f, cam: %f, %f, %f normalized: {%f, %f}\n", point_distance(cam, center_model_translation), camera_position.v[0], camera_position.v[1], camera_position.v[2], asdf.v[0], asdf.v[1]);
-        //int detail_level = (int)(log(512)/log(point_distance(cam, center)));
+    float flip = -1.0;
+    faces_drawn = 0;
+    for(int i = 0; i < 6; i++) {
+        //render_simplexnoise_texture(&planet.snoise_face[i], 1.1, 0.0, i*512.0, i*512.0, order_array2[i], flip);
+        //glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        float rad_to_cam[3] = {0.0, 0.0, 100.0*(-flip)};
+        float center_model_translation[3] = {rad_to_cam[order_array[i][0]], rad_to_cam[order_array[i][1]], rad_to_cam[order_array[i][2]]};
+        float distance_to_sphere = point_distance(cam, center_model_translation);
+        //printf("Distance: %f, camera: (%f, %f, %f)\n", distance_to_sphere, cam[0], cam[1], cam[2]);
+        //printf("%f, %f, %f\n", rad_to_cam[order_array[i][0]], rad_to_cam[order_array[i][1]], rad_to_cam[order_array[i][2]]);
         // Exponential Decay
         // A = A0*e^(kt)
-        int detail_level = 0;
-        //printf("LOD: %d\n", detail_level);
-        
-        if(point_distance(cam, center_model_translation) != 0.0) {
-            //printf("Dist: %f\n", point_distance(cam, center));
-            for(int j = 0; j < 4; j++) {
-                //printf("%f, %f\n",translate_array[j][0], translate_array[j][1]);
-                //mat4 model = mat4Multiply(mat4Multiply(mat4Translate(model_scale, 0.0, 0.0, 1.0), mat4ScaleScalar(planet.radius)), mat4RotateY(1.0));
-                mat4 model = mat4Multiply(
-                    mat4Multiply(
-                        mat4Translate(model_scale, translate_array[j][0], translate_array[j][1], 1.0), 
-                        mat4Scale(planet.radius, quad_scale*planet.radius, quad_scale*planet.radius, 1.0)
-                    ), mat4RotateY(1.0)
-                );
-                //mat4 model = mat4Translate(model_scale, translate_array[j][0], translate_array[j][1], 1.0);
-                //mat4 model = mat4Scale(planet.radius, quad_scale*planet.radius, quad_scale*planet.radius, 1.0);
-                //mat4 position = mat4Multiply(
-                //    //mat4Translate(values[order_array[5][0]], values[order_array[5][1]], values[order_array[5][2]], 1.0), 
-                //    //mat4Scale(scale_values[order_array[5][0]], scale_values[order_array[5][1]], scale_values[order_array[5][2]], 1.0)
-                //    mat4Translate(0.0, translate_array[j][0], translate_array[j][1], 1.0),
-                //    mat4Scale(1.0, quad_scale, quad_scale, 1.0)
-                //);
-//
-                //model = mat4Multiply(model, position);
-                glUniformMatrix4fv(glGetUniformLocation(s->planet_shader, "model"), 1, GL_FALSE, &model.m[0][0]);
+        // A = MAX_DETAIL*exp(log(DECAY_RATE/DIST_TO_DECAY)*CURRENT_DISTANCE)
+        int detail_level = 8*exp((log(0.80)/100)*(int)distance_to_sphere);
+        detail_level = detail_level > 0 ? detail_level : 1;
+        detail_level = 1;
+        //printf("detail_level: %d\n", detail_level);
 
-                glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D, planet.snoise_face[5].render_texture);
-                glActiveTexture(GL_TEXTURE0);
-                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-                glBindVertexArray(planet.sphere_faces[5].vao);
-                glPatchParameteri(GL_PATCH_VERTICES, 3);
-	            glDrawArrays(GL_PATCHES, 0, planet.sphere_faces[5].vertex_number);
-            }
-        //}
-        center[0] = center[0] - quad_scale;
-        center[1] = center[1] - quad_scale;
-        quad_scale /= 2.0;
+        quadtree_point p;
+        p.x = camera_position.v[order_array2[i][0]];
+        p.y = camera_position.v[order_array2[i][1]];
+        quadtree_node *qt = quadtree_create(100.0, detail_level, p);
 
-        //printf("i: %d, center: {%f, %f}, scale: %f\n", i, center[0], center[1], quad_scale);
+        planet_draw_quadtree(qt, planet, shader, camera, order_array[i], i, flip);
+        flip *= -1.0;
     }
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-*/
+    //printf("Faces drawn: %d\n", faces_drawn);
+    
 	//glDrawArrays(GL_TRIANGLES, 0, s->sphere_buffer.vertex_number);
     glBindVertexArray(0);
 

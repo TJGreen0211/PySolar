@@ -51,14 +51,20 @@ vec3 getFogFactor(float d, vec3 color)
 
 vec3 illuminate(float height) {
 	// materials
-	#define c_water vec3(.015, .110, .455)
-	#define c_grass vec3(.086, .132, .018)
-	#define c_beach vec3(.153, .172, .121)
-	#define c_rock  vec3(.080, .050, .030)
-	#define c_snow  vec3(.600, .600, .600)
+	//#define c_water vec3(.015, .110, .455)
+	//#define c_grass vec3(.086, .132, .018)
+	//#define c_beach vec3(.153, .172, .121)
+	//#define c_rock  vec3(.080, .050, .030)
+	//#define c_snow  vec3(.600, .600, .600)
+
+	#define c_water vec3(0.2617, 0.2617, 0.4765)
+	#define c_grass vec3(0.4023, 0.5742, 0.3476)
+	#define c_beach vec3(0.8203, 0.7226, 0.5429)
+	#define c_rock  vec3(0.332, 0.332, 0.332)
+	#define c_snow  vec3(0.7343, 0.7343, 0.6679)
 
 	// limits
-	#define l_water .05
+	#define l_water .12
 	#define l_shore .17
 	#define l_grass .211
 	#define l_rock .351
@@ -78,10 +84,41 @@ vec3 illuminate(float height) {
 	return mix(ocean, shoreline, smoothstep(l_water, l_shore, height));
 }
 
+vec2 parallax_map(vec2 tex_coords, vec3 view_dir) {
+	const float min_layers = 8;
+	const float max_layers = 32;
+	float num_layers = mix(max_layers, min_layers, abs(dot(vec3(0.0, 0.0, 1.0), view_dir)));
+
+	// Calculate layer size
+	float layer_depth = 1.0 / num_layers;
+	float current_layer_depth = 0.0;
+	
+	// Texture coordinate shift per layer from vector P
+	vec2 P = view_dir.xy / view_dir.z * heightScale;
+	vec2 delta_tex_coords = P / num_layers;
+	vec2 current_tex_coords = tex_coords;
+	float current_depth_map_value = texture(texture1, current_tex_coords).r;
+	while(current_layer_depth < current_depth_map_value) {
+		current_tex_coords -= delta_tex_coords;
+		current_depth_map_value = texture(texture1, current_tex_coords).r;
+		current_layer_depth += layer_depth;
+	}
+
+	vec2 prev_tex_coords = current_tex_coords + delta_tex_coords;
+	float after_depth = current_depth_map_value - current_layer_depth;
+	float before_depth = texture(texture1, prev_tex_coords).r - current_layer_depth + layer_depth;
+	float weight = after_depth / (after_depth - before_depth);
+	vec2 final_tex_coords = prev_tex_coords * weight + current_tex_coords * (1.0 - weight);
+
+	return final_tex_coords;
+}
+
 void main()
 {
 	vec3 color = texture(texture1, te_tex_coords).rgb;
 	vec3 view_dir = normalize(te_camera_position - te_position);
+
+	//vec2 parralax_tex_coords = parallax_map(te_tex_coords,  view_dir);
 	vec3 normal = normalize(te_normal);
 	//normal = normalize(normal * 2.0 - 1.0);
 
@@ -100,39 +137,45 @@ void main()
 
 	//color = illuminate(color);
 
-	if(length(color) < 0.1) {
+	float height = length(color);
+	vec3 c = color;
+
+	if(height < 0.12) {
 		color = ocean;
 	}
-	if(length(color) < 0.12) {
+	if(height > 0.12) {
 		color = beach;
 	}
-	if(length(color) < 0.17) {
+	if(height > 0.17) {
 		color = grass_light;
 	}
-	if(length(color) < 0.22) {
+	if(height > 0.22) {
 		color = grass_plain;
 	}
-	if(length(color) < 0.3) {
+	if(height > 0.3) {
 		color = grass_plain_dark;
 	}
-	if(length(color) < 0.37) {
+	if(height > 0.37) {
 		color = forest_dark;
 	}
-	if(length(color) < 0.45) {
+	if(height > 0.45) {
 		color = forest_light;
 	}
-	if(length(color) < 0.5) {
+	if(height > 0.5) {
 		color = rock_light;
 	}
-	if(length(color) < 0.55) {
+	if(height > 0.55) {
 		color = rock_dark;
 	}
-	if(length(color) < 0.6) {
+	if(height > 0.6) {
 		color = snow;
 	}
+
+	color = illuminate(height);
 
 	vec3 ambient = 0.05 * color;
 	frag_color = (color*(frag_color + ambient));
 	vec3 fog = getFogFactor(length(te_camera_position - te_position), frag_color);
 	frag_color_out = vec4(frag_color, 1.0);
+
 }
