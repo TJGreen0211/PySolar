@@ -9,9 +9,9 @@ static float point_distance(float u[3], float v[3]) {
 static void planet_draw_moon(planet_t p, arcball_camera camera, unsigned int shader, float time) {
     glUseProgram(shader);
 
-	float trx = (500.0) * cos(time);
+	float trx = (p.radius*2.0) * cos(time/5.0);
 	float try = 0.0;
-	float trz = (500.0) * sin(time);
+	float trz = (p.radius*2.0) * sin(time/5.0);
 
 	//mat4 model = multiplymat4(multiplymat4(multiplymat4(positionMatrix, translatevec3(translation)), scale(10.0)),rotateX(90.0));
 
@@ -22,7 +22,7 @@ static void planet_draw_moon(planet_t p, arcball_camera camera, unsigned int sha
 
     vec4 camera_position = getCameraPosition(camera, model);
     glUniform3f(glGetUniformLocation(shader, "camera_position"), camera_position.v[0], camera_position.v[1], camera_position.v[2]);
-    glUniform3f(glGetUniformLocation(shader, "lightPosition"), -1000.0, 5.0, -4.0);
+    glUniform3f(glGetUniformLocation(shader, "lightPosition"), -10.0, 5.0, -4000.0);
     glUniform1f(glGetUniformLocation(shader, "time"), time);
 
     // Noise Texture
@@ -110,23 +110,14 @@ static void planet_draw_quadtree(quadtree_node *node, planet_t planet, unsigned 
         //quadtree_print_node(node);
         glUseProgram(shader);
 
-        //printf("width: %f, center: (%f, %f)\n", node->width, node->center.x, node->center.y);
         float translate_order[3] = {node->center.x, node->center.y, ((node->width/2.0)*flip)-(1.0)*flip};
         
-        mat4 model = mat4Multiply(mat4Translate(0.0, 0.0, 0.0, 1.0), mat4ScaleScalar(100.0));
+        mat4 model = mat4Multiply(mat4Translate(0.0, 0.0, 0.0, 1.0), mat4ScaleScalar(planet.radius));
         mat4 translation = mat4Multiply(mat4Translate(translate_order[order[0]], translate_order[order[1]], translate_order[order[2]], 1.0), mat4ScaleScalar(node->width/2.0));
 
-        printf("Scale: %f, Translation: (%f, %f, %f)\n", node->width/2.0, translate_order[0], translate_order[1], translate_order[2]);
-
-        //mat4 translation = mat4Translate(350.0+(node->width/2.0), node->center.x, node->center.y, 1.0);
-        //mat4 position = mat4Multiply(
-        //    //mat4Translate(values[order_array[5][0]], values[order_array[5][1]], values[order_array[5][2]], 1.0), 
-        //    //mat4Scale(scale_values[order_array[5][0]], scale_values[order_array[5][1]], scale_values[order_array[5][2]], 1.0)
-        //    mat4Translate(0.0, translate_array[j][0], translate_array[j][1], 1.0),
-        //    mat4Scale(1.0, quad_scale, quad_scale, 1.0)
-        //);
-        //mat4 position = mat4Translate((node->width/2.0), node->center.x, node->center.y, 1.0);
-        //model = mat4Multiply(model, position);
+        //printf("width: %f, center: (%f, %f)\n", node->width, node->center.x, node->center.y);
+        //printf("Scale: %f, Translation: (%f, %f, %f)\n", node->width/2.0, translate_order[0], translate_order[1], translate_order[2]);
+        //printf("Translation: (%f, %f)\n", ((translate_order[0]+1.0)/2.0)-(node->width/4.0), ((translate_order[1]+1.0)/2.0)-(node->width/4.0));
         
         glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, &camera.perspective_matrix.m[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, &camera.view_matrix.m[0][0]);
@@ -135,11 +126,11 @@ static void planet_draw_quadtree(quadtree_node *node, planet_t planet, unsigned 
 
         vec4 camera_position = getCameraPosition(camera, model);
         glUniform3f(glGetUniformLocation(shader, "camera_position"), camera_position.v[0], camera_position.v[1], camera_position.v[2]);
-        glUniform3f(glGetUniformLocation(shader, "lightPosition"), -1000.0, 500.0, -400.0);
+        glUniform3f(glGetUniformLocation(shader, "lightPosition"), -10.0, 5.0, -4000.0);
         glUniform1f(glGetUniformLocation(shader, "time"), 1.0);
         glUniform1f(glGetUniformLocation(shader, "scale"), node->width/2.0);
-        glUniform1f(glGetUniformLocation(shader, "translate_x"), translate_order[0]);
-        glUniform1f(glGetUniformLocation(shader, "translate_y"), translate_order[1]);
+        glUniform1f(glGetUniformLocation(shader, "translate_x"), ((translate_order[0]+1.0)/2.0)-(node->width/4.0));
+        glUniform1f(glGetUniformLocation(shader, "translate_y"), ((translate_order[1]+1.0)/2.0)-(node->width/4.0));
 
         glUniform1i(glGetUniformLocation(shader, "texture1"), 1);
 
@@ -199,10 +190,11 @@ void planet_draw(planet_t planet, unsigned int shader, arcball_camera camera, fl
     float cam[3] = {camera_position.v[0], camera_position.v[1], camera_position.v[2]};
     float flip = -1.0;
     faces_drawn = 0;
+    //printf("Planetradius: %f\n", planet.radius);
     for(int i = 0; i < 6; i++) {
         //render_simplexnoise_texture(&planet.snoise_face[i], 1.1, 0.0, i*512.0, i*512.0, order_array2[i], flip);
         //glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-        float rad_to_cam[3] = {0.0, 0.0, 100.0*(-flip)};
+        float rad_to_cam[3] = {0.0, 0.0, planet.radius*(-flip)};
         float center_model_translation[3] = {rad_to_cam[order_array[i][0]], rad_to_cam[order_array[i][1]], rad_to_cam[order_array[i][2]]};
         float distance_to_sphere = point_distance(cam, center_model_translation);
         //printf("Distance: %f, camera: (%f, %f, %f)\n", distance_to_sphere, cam[0], cam[1], cam[2]);
@@ -210,15 +202,14 @@ void planet_draw(planet_t planet, unsigned int shader, arcball_camera camera, fl
         // Exponential Decay
         // A = A0*e^(kt)
         // A = MAX_DETAIL*exp(log(DECAY_RATE/DIST_TO_DECAY)*CURRENT_DISTANCE)
-        int detail_level = 8*exp((log(0.80)/100)*(int)distance_to_sphere);
+        int detail_level = 8*exp((log(0.80)/planet.radius)*(int)distance_to_sphere);
         detail_level = detail_level > 0 ? detail_level : 1;
-        detail_level = 1;
         //printf("detail_level: %d\n", detail_level);
 
         quadtree_point p;
         p.x = camera_position.v[order_array2[i][0]];
         p.y = camera_position.v[order_array2[i][1]];
-        quadtree_node *qt = quadtree_create(100.0, detail_level, p);
+        quadtree_node *qt = quadtree_create(planet.radius, detail_level, p);
 
         planet_draw_quadtree(qt, planet, shader, camera, order_array[i], i, flip);
         flip *= -1.0;

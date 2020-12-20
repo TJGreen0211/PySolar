@@ -65,9 +65,9 @@ vec3 illuminate(float height) {
 
 	// limits
 	#define l_water .12
-	#define l_shore .17
-	#define l_grass .211
-	#define l_rock .351
+	#define l_shore .21
+	#define l_grass .411
+	#define l_rock .651
 
 	float s = smoothstep(.4, 1., height);
 	vec3 rock = mix(c_rock, c_snow, smoothstep(1. - .3*s, 1. - .2*s, height));
@@ -119,7 +119,7 @@ void main()
 	vec3 view_dir = normalize(te_camera_position - te_position);
 
 	//vec2 parralax_tex_coords = parallax_map(te_tex_coords,  view_dir);
-	vec3 normal = normalize(te_normal);
+	vec3 normal = normalize(te_test);
 	//normal = normalize(normal * 2.0 - 1.0);
 
 	vec3 light_dir = normalize(te_lightPosition - te_position);

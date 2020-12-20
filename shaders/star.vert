@@ -10,6 +10,8 @@ uniform vec3 lightPosition;
 layout(location = 0) in vec3 a_position;
 layout(location = 1) in vec3 a_normal;
 layout(location = 2) in vec3 a_tangent;
+layout(location = 3) in vec2 a_tex_coords;
+
 
 layout(location = 0) out vec3 v_position;
 layout(location = 1) out vec3 v_normal;
@@ -22,7 +24,7 @@ void main()
 {
     mat3 normal_matrix = transpose(inverse(mat3(model)));
     v_normal = normalize(a_normal*normal_matrix);
-    v_tex_coords = vec2((atan(a_position.x, a_position.z) / (2.0*3.1415926)) + 0.5, -a_position.y * 0.5 + 0.5);
+    v_tex_coords = a_tex_coords;
     v_position = a_position;//vec3(vec4(a_position, 1.0)*model).xyz;
     v_camera_position = camera_position;
     v_light_position = lightPosition;

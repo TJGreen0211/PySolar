@@ -22,6 +22,7 @@ typedef struct starsystem {
     unsigned int sky_shader;
     unsigned int skybox_shader;
     unsigned int wave_shader;
+    unsigned int star_shader;
     planet_t *planets;
     buffer sphere_buffer;
     simplexnoise snoise;

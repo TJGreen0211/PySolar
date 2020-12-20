@@ -8,7 +8,7 @@ void arcball_camera_init(arcball_camera *camera, float fov, float aspect, float 
 	vec3 init_right = {{1.0, 0.0, 0.0}};
 	vec3 init_front = {{0.0, 1.0, 0.0}};
 	vec3 init_up = {{0.0, 0.0, 1.0}};
-	vec3 init_position = {{0.0, 0.0, 0.0}};
+	vec3 init_position = {{600.0, 0.0, 0.0}};
 	mat4 init_identity = mat4IdentityMatrix();
 
     camera->perspective_matrix = mat4Perspective( fov, aspect, z_near, z_far);

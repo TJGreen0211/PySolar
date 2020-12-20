@@ -12,7 +12,6 @@
 #include "geometry/geometry.h"
 #include "player.h"
 #include "graphics/skybox.h"
-#include "utility/quadtree/quadtree.h"
 
 
 typedef struct scene {

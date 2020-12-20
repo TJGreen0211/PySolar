@@ -6,8 +6,8 @@ const float tau = 2.0 * 3.1415926535897;
 out vec4 frag_color;
 
 uniform float systemTime;
-uniform float offset_x;
-uniform float offset_y;
+uniform float width;
+uniform float height;
 uniform float terrain_scale;
 
 uniform float e0;
@@ -231,10 +231,11 @@ const mat2 m = mat2(0.8,-0.6,0.6,0.8);
 float terrain_fbm(vec2 p ) {
     float a = 0.0;
     float b = 1.0;
+    float arr[3] = float[3](p.x, p.y, 1.0);
     vec2  d = vec2(0.0);
     for( int i=0; i<15; i++ )
     {
-        float f = snoise(p);
+        float f = snoise(vec3(p.x, p.y, 1.0));
         vec3 n=vec3(f, f, f);
         d +=n.yz;
         a +=b*n.x/(1.0+dot(d,d));
@@ -258,8 +259,8 @@ void main() {
   //       + 0.03 * snoise(vec3(32.0 * nx, 32.0 * ny, 0.0)));
   //n /= (1.00+0.50+0.25+0.13+0.06+0.03);
 
-  float nx1 = gl_FragCoord.x/4096.0 * scale;
-	float ny1 = gl_FragCoord.y/4096.0 * scale;
+  float nx1 = gl_FragCoord.x/width * scale;
+	float ny1 = gl_FragCoord.y/height * scale;
   float n = terrain_fbm(vec2(nx1, ny1));
   //n = pow(n, 1.7);
 

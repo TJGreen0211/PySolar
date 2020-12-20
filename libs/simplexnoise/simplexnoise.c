@@ -191,8 +191,8 @@ void render_simplexnoise_texture(simplexnoise *snoise, float scale, float time, 
     glActiveTexture(GL_TEXTURE0);
     
     glUniform1f(glGetUniformLocation(snoise->shader, "systemTime"), time);
-    glUniform1f(glGetUniformLocation(snoise->shader, "offset_x"), seed_x);
-    glUniform1f(glGetUniformLocation(snoise->shader, "offset_y"), seed_y);
+    glUniform1f(glGetUniformLocation(snoise->shader, "width"), snoise->width);
+    glUniform1f(glGetUniformLocation(snoise->shader, "height"), snoise->height);
     glUniform1f(glGetUniformLocation(snoise->shader, "zoom"), 1.0);
     glUniform1f(glGetUniformLocation(snoise->shader, "terrain_scale"), scale);
     
