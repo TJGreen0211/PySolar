@@ -6,61 +6,6 @@ static float point_distance(float u[3], float v[3]) {
 	return sqrt((v[0] - u[0])*(v[0] - u[0]) + (v[1] - u[1])*(v[1] - u[1]) + (v[2] - u[2])*(v[2] - u[2]));
 }
 
-static void planet_draw_moon(planet_t p, arcball_camera camera, unsigned int shader, float time) {
-    glUseProgram(shader);
-
-	float trx = (p.radius*2.0) * cos(time/5.0);
-	float try = 0.0;
-	float trz = (p.radius*2.0) * sin(time/5.0);
-
-	//mat4 model = multiplymat4(multiplymat4(multiplymat4(positionMatrix, translatevec3(translation)), scale(10.0)),rotateX(90.0));
-
-    mat4 model = mat4Multiply(mat4Multiply(mat4Multiply(mat4Translate(350.0, 0.0, 0.0, 1.0), mat4Translate(trx, try, trz, 1.0)), mat4ScaleScalar(50.0)), mat4RotateY(time*5.0));
-    glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, &camera.perspective_matrix.m[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, &camera.view_matrix.m[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, &model.m[0][0]);
-
-    vec4 camera_position = getCameraPosition(camera, model);
-    glUniform3f(glGetUniformLocation(shader, "camera_position"), camera_position.v[0], camera_position.v[1], camera_position.v[2]);
-    glUniform3f(glGetUniformLocation(shader, "lightPosition"), -10.0, 5.0, -4000.0);
-    glUniform1f(glGetUniformLocation(shader, "time"), time);
-
-    // Noise Texture
-    glUniform1i(glGetUniformLocation(shader, "texture1"), 1);
-
-    // Update wave textures from the genereated wave patch
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, p.waves.dx_texture);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, p.waves.dimension, p.waves.dimension, GL_RGBA, GL_FLOAT, p.waves.displacementdx);
-    glUniform1i(glGetUniformLocation(shader, "wave_dx"), 2);
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, p.waves.dy_texture);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, p.waves.dimension, p.waves.dimension, GL_RGBA, GL_FLOAT, p.waves.displacementdy);
-    glUniform1i(glGetUniformLocation(shader, "wave_dy"), 3);
-    glActiveTexture(GL_TEXTURE4);
-    glBindTexture(GL_TEXTURE_2D, p.waves.dz_texture);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, p.waves.dimension, p.waves.dimension, GL_RGBA, GL_FLOAT, p.waves.displacementdz);
-    glUniform1i(glGetUniformLocation(shader, "wave_dz"), 4);
-
-    glActiveTexture(GL_TEXTURE0);
-
-    for(int i = 0; i < 6; i++) {
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glActiveTexture(GL_TEXTURE1);
-        //glBindTexture(GL_TEXTURE_2D, s->snoise.render_texture);
-        glBindTexture(GL_TEXTURE_2D, p.snoise_face[i].render_texture);
-        glActiveTexture(GL_TEXTURE0);
-
-        glBindVertexArray(p.sphere_faces[i].vao);
-        glPatchParameteri(GL_PATCH_VERTICES, 3);
-	    glDrawArrays(GL_PATCHES, 0, p.sphere_faces[i].vertex_number);
-    }
-
-	//glDrawArrays(GL_TRIANGLES, 0, s->sphere_buffer.vertex_number);
-    glBindVertexArray(0);
-}
-
-
 
 /*
 static void draw_waves(starsystem *s, arcball_camera camera, float time) {
@@ -104,20 +49,32 @@ static void draw_waves(starsystem *s, arcball_camera camera, float time) {
     }
 }*/
 
-static void planet_draw_quadtree(quadtree_node *node, planet_t planet, unsigned int shader, arcball_camera camera, int order[3], int face_index, float flip) {
+static void planet_draw_quadtree(quadtree_node *node, planet_t planet, mat4 model, unsigned int shader, arcball_camera camera, int order[3], int face_index, float flip) {
     if(quadtree_node_is_leaf(node)) {
         faces_drawn++;
         //quadtree_print_node(node);
         glUseProgram(shader);
 
         float translate_order[3] = {node->center.x, node->center.y, ((node->width/2.0)*flip)-(1.0)*flip};
-        
-        mat4 model = mat4Multiply(mat4Translate(0.0, 0.0, 0.0, 1.0), mat4ScaleScalar(planet.radius));
         mat4 translation = mat4Multiply(mat4Translate(translate_order[order[0]], translate_order[order[1]], translate_order[order[2]], 1.0), mat4ScaleScalar(node->width/2.0));
 
         //printf("width: %f, center: (%f, %f)\n", node->width, node->center.x, node->center.y);
         //printf("Scale: %f, Translation: (%f, %f, %f)\n", node->width/2.0, translate_order[0], translate_order[1], translate_order[2]);
         //printf("Translation: (%f, %f)\n", ((translate_order[0]+1.0)/2.0)-(node->width/4.0), ((translate_order[1]+1.0)/2.0)-(node->width/4.0));
+
+        // Update wave textures from the genereated wave patch
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, planet.waves.dx_texture);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, planet.waves.dimension, planet.waves.dimension, GL_RGBA, GL_FLOAT, planet.waves.displacementdx);
+        glUniform1i(glGetUniformLocation(shader, "wave_dx"), 2);
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, planet.waves.dy_texture);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, planet.waves.dimension, planet.waves.dimension, GL_RGBA, GL_FLOAT, planet.waves.displacementdy);
+        glUniform1i(glGetUniformLocation(shader, "wave_dy"), 3);
+        glActiveTexture(GL_TEXTURE4);
+        glBindTexture(GL_TEXTURE_2D, planet.waves.dz_texture);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, planet.waves.dimension, planet.waves.dimension, GL_RGBA, GL_FLOAT, planet.waves.displacementdz);
+        glUniform1i(glGetUniformLocation(shader, "wave_dz"), 4);
         
         glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, &camera.perspective_matrix.m[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, &camera.view_matrix.m[0][0]);
@@ -144,30 +101,14 @@ static void planet_draw_quadtree(quadtree_node *node, planet_t planet, unsigned 
 
         //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     } else {
-        planet_draw_quadtree(node->nw, planet, shader, camera, order, face_index, flip);
-        planet_draw_quadtree(node->ne, planet, shader, camera, order, face_index, flip);
-        planet_draw_quadtree(node->sw, planet, shader, camera, order, face_index, flip);
-        planet_draw_quadtree(node->se, planet, shader, camera, order, face_index, flip);
+        planet_draw_quadtree(node->nw, planet, model, shader, camera, order, face_index, flip);
+        planet_draw_quadtree(node->ne, planet, model, shader, camera, order, face_index, flip);
+        planet_draw_quadtree(node->sw, planet, model, shader, camera, order, face_index, flip);
+        planet_draw_quadtree(node->se, planet, model, shader, camera, order, face_index, flip);
     }
 }
 
-
-void planet_draw(planet_t planet, unsigned int shader, arcball_camera camera, float time, unsigned int framebuffer) {
-    /*mat4 model = mat4Multiply(mat4Multiply(mat4Translate(350.0, 0.0, 0.0, 1.0), mat4ScaleScalar(planet.radius)), mat4RotateY(1.0));
-    // Update wave textures from the genereated wave patch
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, planet.waves.dx_texture);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, planet.waves.dimension, planet.waves.dimension, GL_RGBA, GL_FLOAT, planet.waves.displacementdx);
-    glUniform1i(glGetUniformLocation(shader, "wave_dx"), 2);
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, planet.waves.dy_texture);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, planet.waves.dimension, planet.waves.dimension, GL_RGBA, GL_FLOAT, planet.waves.displacementdy);
-    glUniform1i(glGetUniformLocation(shader, "wave_dy"), 3);
-    glActiveTexture(GL_TEXTURE4);
-    glBindTexture(GL_TEXTURE_2D, planet.waves.dz_texture);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, planet.waves.dimension, planet.waves.dimension, GL_RGBA, GL_FLOAT, planet.waves.displacementdz);
-    glUniform1i(glGetUniformLocation(shader, "wave_dz"), 4);*/
-
+static void planet_initialize_quadtree_draw(planet_t planet, arcball_camera camera, mat4 model, unsigned int shader, float time) {
     int order_array[6][3] = {
         {0, 1, 2},
         {0, 1, 2},
@@ -191,6 +132,8 @@ void planet_draw(planet_t planet, unsigned int shader, arcball_camera camera, fl
     float flip = -1.0;
     faces_drawn = 0;
     //printf("Planetradius: %f\n", planet.radius);
+
+    
     for(int i = 0; i < 6; i++) {
         //render_simplexnoise_texture(&planet.snoise_face[i], 1.1, 0.0, i*512.0, i*512.0, order_array2[i], flip);
         //glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -211,7 +154,7 @@ void planet_draw(planet_t planet, unsigned int shader, arcball_camera camera, fl
         p.y = camera_position.v[order_array2[i][1]];
         quadtree_node *qt = quadtree_create(planet.radius, detail_level, p);
 
-        planet_draw_quadtree(qt, planet, shader, camera, order_array[i], i, flip);
+        planet_draw_quadtree(qt, planet, model, shader, camera, order_array[i], i, flip);
         flip *= -1.0;
     }
 
@@ -219,6 +162,27 @@ void planet_draw(planet_t planet, unsigned int shader, arcball_camera camera, fl
     
 	//glDrawArrays(GL_TRIANGLES, 0, s->sphere_buffer.vertex_number);
     glBindVertexArray(0);
+}
+
+static void planet_draw_moon(planet_t planet, arcball_camera camera, unsigned int shader, float time) {
+    glUseProgram(shader);
+
+	float trx = (planet.radius*2.0) * cos(time/5.0);
+	float try = 0.0;
+	float trz = (planet.radius*2.0) * sin(time/5.0);
+
+	//mat4 model = multiplymat4(multiplymat4(multiplymat4(positionMatrix, translatevec3(translation)), scale(10.0)),rotateX(90.0));
+
+    mat4 model = mat4Multiply(mat4Multiply(mat4Multiply(mat4Translate(350.0, 0.0, 0.0, 1.0), mat4Translate(trx, try, trz, 1.0)), mat4ScaleScalar(50.0)), mat4RotateY(time*5.0));
+
+    planet_initialize_quadtree_draw(planet, camera, model, shader, time);
+}
+
+
+void planet_draw(planet_t planet, unsigned int shader, arcball_camera camera, float time, unsigned int framebuffer) {
+    /*mat4 model = mat4Multiply(mat4Multiply(mat4Translate(350.0, 0.0, 0.0, 1.0), mat4ScaleScalar(planet.radius)), mat4RotateY(1.0));*/
+    mat4 model = mat4Multiply(mat4Translate(0.0, 0.0, 0.0, 1.0), mat4ScaleScalar(planet.radius));
+    planet_initialize_quadtree_draw(planet, camera, model, shader, time);
 
     planet_draw_moon(planet, camera, shader, time);
 }

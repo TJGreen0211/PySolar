@@ -36,6 +36,10 @@ starsystem *starsystem_init() {
     s->planets[0].sphere_faces[5] = buffer_init(quad_sphere);
     geometry_quadcube_dealloc(&quad_sphere);
 
+    geometry planet_ring;
+    geometry_ring_create(10, &planet_ring);
+    s->planets[0].ring_buffer = buffer_init(planet_ring);
+
     s->planets[0].radius = 500.0;
     s->planets[0].atmosphere_radius = 350.0;
 
@@ -95,6 +99,10 @@ static void load_shaders(starsystem *s) {
 
     s->star_shader = shader_create_program("../shaders/star.vert",
         "../shaders/star.frag",NULL,NULL,NULL);
+
+
+    s->planet_shader_low = shader_create_program("../shaders/planet2.vert",
+        "../shaders/planet2.frag",NULL,NULL,NULL);
 
     s->planet_shader = shader_create_program(
         "../shaders/planet.vert",
@@ -167,12 +175,47 @@ static void draw_atmosphere(starsystem *s, arcball_camera camera, float time) {
     glCullFace(GL_BACK);
 }
 
-static void draw_star(starsystem *s, arcball_camera camera, float time) {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE);
-    float atmosphere_scale_value = s->planets[0].radius*1.15;
+static void draw_ring(starsystem *s, arcball_camera camera, float time) {
+    //glDisable(GL_CULL_FACE);
+    //glEnable(GL_BLEND);
+    //glBlendFunc(GL_ONE, GL_ONE);
+    float atmosphere_scale_value = 300.0;
 
     mat4 model = mat4Multiply(mat4Translate(0.0, 0.0, 0.0, 1.0), mat4ScaleScalar(atmosphere_scale_value));
+    vec4 camera_position = getCameraPosition(camera, model);
+
+    unsigned int shader_program = s->planet_shader_low;
+    glUseProgram(shader_program);
+
+    glUniformMatrix4fv(glGetUniformLocation(shader_program, "projection"), 1, GL_FALSE, &camera.perspective_matrix.m[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(shader_program, "view"), 1, GL_FALSE, &camera.view_matrix.m[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(shader_program, "model"), 1, GL_FALSE, &model.m[0][0]);
+
+    glUniform3f(glGetUniformLocation(shader_program, "camera_position"), camera_position.v[0], camera_position.v[1], camera_position.v[2]);
+    glUniform3f(glGetUniformLocation(shader_program, "lightPosition"), -10.0, 5.0, -4000.0);
+
+    // Atmosphere constants
+    glUniform1f(glGetUniformLocation(shader_program, "fInnerRadius"), s->planets[0].radius);
+    glUniform1f(glGetUniformLocation(shader_program, "fOuterRadius"), atmosphere_scale_value);
+    glUniform1f(glGetUniformLocation(shader_program, "time"), time);
+
+    glBindVertexArray(s->planets[0].ring_buffer.vao);
+    //printf("Vertex number %d\n", s->planets[0].ring_buffer.vertex_number);
+	glDrawArrays(GL_TRIANGLES, 0, s->planets[0].ring_buffer.vertex_number);
+    glBindVertexArray(0);
+
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glCullFace(GL_BACK);
+    //glEnable(GL_CULL_FACE);
+}
+
+static void draw_star(starsystem *s, arcball_camera camera, float time) {
+    //glEnable(GL_BLEND);
+    //glBlendFunc(GL_ONE, GL_ONE);
+    float atmosphere_scale_value = 100.0;
+
+    mat4 model = mat4Multiply(mat4Translate(700.0, 0.0, 0.0, 1.0), mat4ScaleScalar(atmosphere_scale_value));
     vec4 camera_position = getCameraPosition(camera, model);
 
     unsigned int shader_program = s->star_shader;
@@ -188,17 +231,13 @@ static void draw_star(starsystem *s, arcball_camera camera, float time) {
     // Atmosphere constants
     glUniform1f(glGetUniformLocation(shader_program, "fInnerRadius"), s->planets[0].radius);
     glUniform1f(glGetUniformLocation(shader_program, "fOuterRadius"), atmosphere_scale_value);
-    glUniform3f(glGetUniformLocation(shader_program, "C_R"), 0.3, 0.1, 1.0);
-    glUniform1f(glGetUniformLocation(shader_program, "K_R"), 0.166);
-    glUniform1f(glGetUniformLocation(shader_program, "K_M"), 0.0025);
-    glUniform1f(glGetUniformLocation(shader_program, "G_M"), -0.85);
-    glUniform1f(glGetUniformLocation(shader_program, "E"), 14.3);
+    glUniform1f(glGetUniformLocation(shader_program, "time"), time);
 
     glBindVertexArray(s->sphere_buffer.vao);
 	glDrawArrays(GL_TRIANGLES, 0, s->sphere_buffer.vertex_number);
     glBindVertexArray(0);
 
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glCullFace(GL_BACK);
 }
@@ -206,30 +245,13 @@ static void draw_star(starsystem *s, arcball_camera camera, float time) {
 
 
 void starsystem_draw(starsystem *s, arcball_camera camera, float time, int width, int height, unsigned int framebuffer) {
-    glViewport(0,0, width, height); 
-
-    /*int order[3] = {0, 1, 2};
-    render_simplexnoise_texture(&s->snoise, time, s->snoise.width, s->snoise.height, order, 1);
-    s->planets[0].snoise_textures[0] = s->snoise.render_texture;
-    s->planets[0].snoise_textures[1] = s->snoise.render_texture;
-    order[0] =2; order[1] = 0; order[2] = 1;
-    render_simplexnoise_texture(&s->snoise, time, s->snoise.width, s->snoise.height, order, 1);
-    s->planets[0].snoise_textures[2] = s->snoise.render_texture;
-    s->planets[0].snoise_textures[3] = s->snoise.render_texture;
-    order[0] = 1; order[1] = 2; order[2] = 0;
-    render_simplexnoise_texture(&s->snoise, time, s->snoise.width, s->snoise.height, order, 1);
-    s->planets[0].snoise_textures[4] = s->snoise.render_texture;
-    s->planets[0].snoise_textures[5] = s->snoise.render_texture;*/
-
-    //glClear(GL_COLOR_BUFFER_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
     
     waves_generate(&s->planets[0].waves, time);
     planet_draw(s->planets[0], s->planet_shader, camera, time, framebuffer);
-    //draw_waves(s, camera, time);
     draw_atmosphere(s, camera, time);
 
-    draw_star(s, camera, time);
+    //draw_ring(s, camera, time);
 }
 
 void starsystem_dealloc(starsystem *s) {

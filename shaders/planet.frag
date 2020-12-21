@@ -25,12 +25,20 @@ const vec3 ocean = vec3(0.2617, 0.2617, 0.4765);
 
 uniform sampler2D texture1;
 
+uniform sampler2D wave_dx;
+uniform sampler2D wave_dy;
+uniform sampler2D wave_dz;
+
+
 const vec3 diffuseColor = vec3(0.8, 0.8, 1.0);
 const vec3 specColor = vec3(1.0, 1.0, 1.0);
 const float heightScale = 0.01;
 const vec3 fog_color = vec3(0.7, 0.6, 1.0);
 
 out vec4 frag_color_out;
+
+const vec3 SEA_BASE = vec3(0.0,0.09,0.18);
+const vec3 SEA_WATER_COLOR = vec3(0.8,0.9,0.6)*0.6;
 
 float FogUniform(float dist, float density)
 {
@@ -113,6 +121,23 @@ vec2 parallax_map(vec2 tex_coords, vec3 view_dir) {
 	return final_tex_coords;
 }
 
+vec3 getSeaColor(vec3 p, vec3 n, float diffuse, float specular, vec3 eye, vec3 dist) {  
+    float fresnel = clamp(1.0 - dot(n,-eye), 0.0, 1.0);
+    fresnel = pow(fresnel,3.0) * 0.5;
+        
+    vec3 reflected = vec3(0.3, 0.1, 1.0);    
+    vec3 refracted = SEA_BASE + diffuse * SEA_WATER_COLOR * 0.12; 
+    
+    vec3 color = mix(refracted,reflected,fresnel);
+    
+    float atten = max(1.0 - dot(dist,dist) * 0.001, 0.0);
+    color += SEA_WATER_COLOR * (p.y - 0.6) * 0.18 * atten;
+    
+    //color += vec3(specular(n,l,eye,60.0));
+    
+    return color;
+}
+
 void main()
 {
 	vec3 color = texture(texture1, te_tex_coords).rgb;
@@ -137,41 +162,20 @@ void main()
 
 	//color = illuminate(color);
 
-	float height = length(color);
+	
 	vec3 c = color;
 
-	if(height < 0.12) {
-		color = ocean;
-	}
-	if(height > 0.12) {
-		color = beach;
-	}
-	if(height > 0.17) {
-		color = grass_light;
-	}
-	if(height > 0.22) {
-		color = grass_plain;
-	}
-	if(height > 0.3) {
-		color = grass_plain_dark;
-	}
-	if(height > 0.37) {
-		color = forest_dark;
-	}
-	if(height > 0.45) {
-		color = forest_light;
-	}
-	if(height > 0.5) {
-		color = rock_light;
-	}
-	if(height > 0.55) {
-		color = rock_dark;
-	}
-	if(height > 0.6) {
-		color = snow;
-	}
 
+	//vec3 wave_dx_color = texture(wave_dx, te_tex_coords*4.0).rgb;
+	//vec3 wave_dy_color = texture(wave_dy, te_tex_coords*4.0).rgb;
+	//vec3 wave_dz_color = texture(wave_dz, te_tex_coords*4.0).rgb;
+
+	//vec3 final_wave_color = (wave_dx_color + wave_dy_color + wave_dz_color)/5.0;
+
+	float height = length(color);
 	color = illuminate(height);
+
+	//vec3 sea = getSeaColor(final_wave_color, normal, 0.05, specular, view_dir, te_camera_position - te_position); 
 
 	vec3 ambient = 0.05 * color;
 	frag_color = (color*(frag_color + ambient));

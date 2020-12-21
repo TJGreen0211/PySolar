@@ -65,7 +65,7 @@ void geometry_ring_create(int divisions, geometry *ring) {
     ring->vertex_number = 360*6;
     ring->point_size = ring->vertex_number*sizeof(vec3);
     ring->normal_size = ring->vertex_number*sizeof(vec3);
-    ring->tangent_size = ring->vertex_number*sizeof(vec3);
+    ring->tangent_size = 0;//ring->vertex_number*sizeof(vec3);
     ring->tex_coord_size = ring->vertex_number*sizeof(vec2);
 
     ring->points = malloc(ring->point_size);
@@ -79,6 +79,10 @@ void geometry_ring_create(int divisions, geometry *ring) {
         float deg = i * degToRad;
         float outer_rad = 3.0;
         float inner_rad = 2.0;
+
+		//float trx = (p.radius*2.0) * cos(time/5.0);
+		//float try = 0.0;
+		//float trz = (p.radius*2.0) * sin(time/5.0);
 
         ring->points[index].v[0] = cos(deg)*outer_rad;
         ring->points[index].v[1] = sin(deg)*outer_rad;
@@ -148,5 +152,5 @@ void geometry_ring_create(int divisions, geometry *ring) {
 
         index += 6;
     }
-    generate_ring_tangents(ring);
+    //generate_ring_tangents(ring);
 }

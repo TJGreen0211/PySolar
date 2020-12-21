@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = -Wall -Wno-unused-function
 PROG = main
 
 FILE_NAME = $(PROG)
@@ -7,6 +7,7 @@ BIN_DIR = C:/Users/wonde/OneDrive/Documents/Programming/PySolar/bin
 MAKE_DIR = $(PWD)
 SRCS = main.c \
 	player.c \
+	utility/quadtree/quadtree.c \
 	glad/glad.c \
 	matrixmath/matrixmath.a \
 	starsystem/starsystem.a \
@@ -30,7 +31,7 @@ debug_compile : CFLAGS += -DDEBUG
 debug_compile : do_precomp target clean
 
 do_precomp:
-	#@$(MAKE) -C camera
+	@$(MAKE) -C camera
 	#@$(MAKE) -C matrixmath
 	@$(MAKE) -C geometry
 	@$(MAKE) -C graphics

@@ -18,6 +18,7 @@
 typedef struct starsystem {
     unsigned int sun_shader;
     unsigned int planet_shader;
+    unsigned int planet_shader_low;
     unsigned int atmosphere_shader;
     unsigned int sky_shader;
     unsigned int skybox_shader;

@@ -19,5 +19,6 @@ typedef struct fbo {
 
 void framebuffer_init(float size_x, float size_y, fbo *framebuffer);
 void framebuffer_draw(fbo *framebuffer);
+void framebuffer_destroy(fbo *framebuffer);
 
 #endif

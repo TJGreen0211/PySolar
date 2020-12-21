@@ -196,6 +196,8 @@ DLL_EXPORT void geometry_quadcube_create_face(geometry *quadcube_face, int divis
 	quadcube_face->tangents = malloc(divisions*divisions*sizeof(vec3)*6);
 	quadcube_face->tex_coords = malloc(divisions*divisions*sizeof(vec2)*6);
 
+	vec3 *temp_normalized_points = malloc(divisions*divisions*sizeof(vec3)*6);
+
 	quadcube_face->vertex_number = 0;
 
 	subdivide_face(quadcube_face, (float)reverse, divisions, order);
@@ -210,20 +212,22 @@ DLL_EXPORT void geometry_quadcube_create_face(geometry *quadcube_face, int divis
 		quadcube_face->tex_coords[i].v[0] = (quadcube_face->points[i].v[order[1]] + 1.0)/2.0; 
 		quadcube_face->tex_coords[i].v[1] = (quadcube_face->points[i].v[order[0]] + 1.0)/2.0;
 
-		quadcube_face->points[i] = vec3Normalize(quadcube_face->points[i]);
+		temp_normalized_points[i] = vec3Normalize(quadcube_face->points[i]);
+
+		//quadcube_face->points[i] = vec3Normalize(quadcube_face->points[i]);
 	}
 
 	for(int i = 0; i < quadcube_face->vertex_number; i+=3)
 	{
 		vec3 one, two;
 
-		one.v[0] = quadcube_face->points[i+1].v[0] - quadcube_face->points[i].v[0];
-		one.v[1] = quadcube_face->points[i+1].v[1] - quadcube_face->points[i].v[1];
-		one.v[2] = quadcube_face->points[i+1].v[2] - quadcube_face->points[i].v[2];
+		one.v[0] = temp_normalized_points[i+1].v[0] - temp_normalized_points[i].v[0];
+		one.v[1] = temp_normalized_points[i+1].v[1] - temp_normalized_points[i].v[1];
+		one.v[2] = temp_normalized_points[i+1].v[2] - temp_normalized_points[i].v[2];
 
-		two.v[0] = quadcube_face->points[i+2].v[0] - quadcube_face->points[i+1].v[0];
-		two.v[1] = quadcube_face->points[i+2].v[1] - quadcube_face->points[i+1].v[1];
-		two.v[2] = quadcube_face->points[i+2].v[2] - quadcube_face->points[i+1].v[2];
+		two.v[0] = temp_normalized_points[i+2].v[0] - temp_normalized_points[i+1].v[0];
+		two.v[1] = temp_normalized_points[i+2].v[1] - temp_normalized_points[i+1].v[1];
+		two.v[2] = temp_normalized_points[i+2].v[2] - temp_normalized_points[i+1].v[2];
 
 		vec3 normal = vec3Normalize(crossProduct(one, two));
 

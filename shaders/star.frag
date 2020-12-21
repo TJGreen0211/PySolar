@@ -91,7 +91,11 @@ void main()
 {
 	vec3 view_dir = normalize(vec3(model*vec4(v_position, 1.0) - vec4(v_camera_position, 1.0)));
 
-	vec3 sun = getSunColor(v_camera_position, view_dir, fInnerRadius);
+	//vec3 sun = getSunColor(v_camera_position, view_dir, fInnerRadius);
 
+	float angle = atan( v_tex_coords.x, v_tex_coords.y )/3.2832;
+	vec3 noise_coord = vec3(angle, length(v_tex_coords), time * 0.01);
+	float n = snoise(noise_coord, 50.0);
+	vec3 sun = vec3(angle);
 	frag_color = vec4(sun, 1.0);
 }

@@ -37,6 +37,7 @@ typedef struct planet_t {
     simplexnoise snoise_face[6];
     simplexnoise snoise_biomes[6];
     buffer planet_ring;
+    buffer ring_buffer;
     waves_t waves;
 } planet_t;
 

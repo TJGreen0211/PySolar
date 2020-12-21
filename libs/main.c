@@ -4,6 +4,7 @@ static float delta_time = 0.0;
 static int actionPress, keys;
 static arcball_camera camera;
 static skybox space_skybox;
+fbo scene_frambuffer;
 
 
 void reload_shader(starsystem *sol) {
@@ -18,6 +19,9 @@ void reload_shader(starsystem *sol) {
         "../shaders/planet.tesh",
         NULL);
 
+    sol->star_shader = shader_create_program("../shaders/star.vert",
+        "../shaders/star.frag",NULL,NULL,NULL);
+/*
     for(int i = 0; i < 6; i++) {
     glDeleteProgram(sol->planets[0].snoise_face[i].shader);
     sol->planets[0].snoise_face[i].shader = shader_create_program("../shaders/noise.vert",
@@ -39,7 +43,7 @@ void reload_shader(starsystem *sol) {
         //s->planets[0].snoise_textures[i] = s->snoise.render_texture;
         flip *= -1;
     }
-
+*/
 
     //sol->planet_shader = shader_create_program("../shaders/planet2.vert",
     //    "../shaders/planet2.frag",NULL,NULL,NULL);
@@ -139,6 +143,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // make sure the viewport matches the new window dimensions; note that width and 
     // height will be significantly larger than specified on retina displays.
     camera.perspective_matrix = mat4Perspective(90.0, (float)width/(float)height, 0.1, 5000.0);
+    framebuffer_init((float)width, (float)height, &scene_frambuffer);
     printf("Framebuffer: %d, %d\n", width, height);
     glViewport(0, 0, width, height);
 }
@@ -148,10 +153,13 @@ int run(void)
 {
     GLFWwindow* window;
 
-    /* Initialize the library */
+    scene main_scene;
+
+    /* Initialize GLFW Library */
     if (!glfwInit())
         return -1;
 
+    // Ignore for now
     //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
@@ -166,8 +174,6 @@ int run(void)
     }
     
     /* Make the window's context current */
-
-
     glfwMakeContextCurrent(window);
     glfwSetKeyCallback(window, key_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
@@ -176,7 +182,7 @@ int run(void)
     
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 
-    fbo scene_frambuffer;
+    
     framebuffer_init((float)mode->width, (float)mode->height, &scene_frambuffer);
 
     space_skybox = skybox_init(2048);
@@ -186,7 +192,9 @@ int run(void)
     player *player_1 = player_init();
 
 	float lastFrame = 0.0;
+    printf("Width: %d, height: %d\n", mode->width, mode->height);
     glViewport(0,0,mode->width,mode->height);
+    //glViewport(0,0, 1900, 1060);
     glEnable(GL_CULL_FACE);
     glDisable(GL_CULL_FACE);
     glCullFace(GL_BACK);
@@ -214,8 +222,7 @@ int run(void)
     	    reload_shader(sol);
         }
 
-        /* Render here */
-    
+        /* Render scene */
         int width, height;
         glfwGetWindowSize(window, &width, &height);
 
@@ -250,12 +257,4 @@ int main(int argc, char *argv[]) {
     int exit_status = run();
     printf("exit(%d)\n", exit_status);
     return exit_status;
-
-    //quadtree_point p;
-    //p.x = 700.0;
-    //p.y = 700.0;
-    //quadtree_node *qt = quadtree_create(100.0, 100.0, 5, p);
-    //printf("Quadtree created\n");
-    //quadtree_search(qt);
-    //return 0;
 }
