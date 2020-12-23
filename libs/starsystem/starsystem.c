@@ -5,7 +5,10 @@ static unsigned int create_wave_texture(int wave_patch_dimension);
 
 starsystem *starsystem_init() {
     starsystem *s = (starsystem *)malloc(sizeof(starsystem));
-    s->planets = malloc(sizeof(planet_t));
+    //s->planets = malloc(sizeof(planet_t));
+
+    simplexnoise_init(&s->snoise, 512, 512);
+    
     if (s == NULL) {
         free(s);
         s = NULL;
@@ -17,31 +20,11 @@ starsystem *starsystem_init() {
     s->sphere_buffer = buffer_init(quad_sphere);
     geometry_quadcube_dealloc(&quad_sphere);
 
-    int order[3] = {0, 1, 2};
-    geometry_quadcube_create_face(&quad_sphere, 20, order, 1);
-    s->planets[0].sphere_faces[0] = buffer_init(quad_sphere);
-    geometry_quadcube_create_face(&quad_sphere, 20, order, -1);
-    s->planets[0].sphere_faces[1] = buffer_init(quad_sphere);
-    
-    order[0] =2; order[1] = 0; order[2] = 1;
-    geometry_quadcube_create_face(&quad_sphere, 20, order, 1);
-    s->planets[0].sphere_faces[2] = buffer_init(quad_sphere);
-    geometry_quadcube_create_face(&quad_sphere, 20, order, -1);
-    s->planets[0].sphere_faces[3] = buffer_init(quad_sphere);
-
-    order[0] = 1; order[1] = 2; order[2] = 0;
-    geometry_quadcube_create_face(&quad_sphere, 20, order, 1);
-    s->planets[0].sphere_faces[4] = buffer_init(quad_sphere);
-    geometry_quadcube_create_face(&quad_sphere, 20, order, -1);
-    s->planets[0].sphere_faces[5] = buffer_init(quad_sphere);
-    geometry_quadcube_dealloc(&quad_sphere);
+    s->planets = planet_init();
 
     geometry planet_ring;
     geometry_ring_create(10, &planet_ring);
     s->planets[0].ring_buffer = buffer_init(planet_ring);
-
-    s->planets[0].radius = 500.0;
-    s->planets[0].atmosphere_radius = 350.0;
 
     float e[6] = {1.00, 0.50, 0.25, 0.13, 0.06, 0.03};
     for(int j = 0; j<6; j++) {
@@ -51,10 +34,7 @@ starsystem *starsystem_init() {
     }
     }
 
-    for(int i = 0; i < 6; i++) {
-        simplexnoise_init(&s->planets[0].snoise_face[i], 4096, 4096);
-        simplexnoise_init(&s->planets[0].snoise_biomes[i], 512, 512);
-    }
+    clock_t tic = clock();
     int order_array[6][3] = {
         {0, 1, 2},
         {0, 1, 2},
@@ -65,10 +45,8 @@ starsystem *starsystem_init() {
     };
     int flip = 1;
 
-    clock_t tic = clock();
-
     for(int i = 0; i < 6; i++) {
-        render_simplexnoise_texture(&s->planets[0].snoise_face[i], 1.1, 0.0, i*s->snoise.width, i*s->snoise.height, order_array[i], flip);
+        render_simplexnoise_texture(&s->planets[0].snoise_face[i], 1.1, 0.0, 1.0, 1.0, order_array[i], flip);
         //render_simplexnoise_texture(&s->planets[0].snoise_biomes[i], 0.0, i*s->snoise.width, i*s->snoise.height, order_array[i], flip);
         //s->planets[0].snoise_textures[i] = s->snoise.render_texture;
         flip *= -1;
@@ -221,6 +199,17 @@ static void draw_star(starsystem *s, arcball_camera camera, float time) {
     unsigned int shader_program = s->star_shader;
     glUseProgram(shader_program);
 
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, s->snoise.perm_texture);
+    glUniform1i(glGetUniformLocation(shader_program, "permTexture"), 1);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, s->snoise.simplex_texture);
+    glUniform1i(glGetUniformLocation(shader_program, "simplexTexture"), 2);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, s->snoise.grad_texture);
+    glUniform1i(glGetUniformLocation(shader_program, "simplexTexture"), 3);
+    glActiveTexture(GL_TEXTURE0);
+
     glUniformMatrix4fv(glGetUniformLocation(shader_program, "projection"), 1, GL_FALSE, &camera.perspective_matrix.m[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(shader_program, "view"), 1, GL_FALSE, &camera.view_matrix.m[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(shader_program, "model"), 1, GL_FALSE, &model.m[0][0]);
@@ -250,6 +239,8 @@ void starsystem_draw(starsystem *s, arcball_camera camera, float time, int width
     waves_generate(&s->planets[0].waves, time);
     planet_draw(s->planets[0], s->planet_shader, camera, time, framebuffer);
     draw_atmosphere(s, camera, time);
+
+    draw_star(s, camera, time);
 
     //draw_ring(s, camera, time);
 }

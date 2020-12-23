@@ -92,5 +92,5 @@ void framebuffer_draw(fbo *framebuffer) {
 
 void framebuffer_destroy(fbo *framebuffer) {
     glDeleteProgram(framebuffer->framebuffer_shader);
-    glDeleteBuffers(1, framebuffer->quad_buffer.vbo);
+    //glDeleteBuffers(1, framebuffer->quad_buffer.vbo);
 }

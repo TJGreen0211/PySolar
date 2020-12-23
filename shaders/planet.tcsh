@@ -5,12 +5,16 @@ in vec3 v_position[];
 in vec3 v_normal[];
 in vec3 v_tangent[];
 in vec2 v_tex_coords[];
+in mat4 v_translation[];
+in vec3 v_transformation[];
 
 layout(vertices = 3) out;
 out vec3 tc_position[];
 out vec3 tc_normal[];
 out vec3 tc_tangent[];
 out vec2 tc_tex_coords[];
+out mat4 tc_translation[];
+out vec3 tc_transformation[];
 
 uniform mat4 model;
 uniform vec3 camera_position;
@@ -28,6 +32,8 @@ void main()
 	tc_normal[gl_InvocationID] = v_normal[gl_InvocationID];
 	tc_tangent[gl_InvocationID] = v_tangent[gl_InvocationID];
 	tc_tex_coords[gl_InvocationID] = v_tex_coords[gl_InvocationID];
+	tc_translation[gl_InvocationID] = v_translation[gl_InvocationID];
+	tc_transformation[gl_InvocationID] = v_transformation[gl_InvocationID];
 
 	//float l = level(tessPos, vec3(camPosition));
 	//vec3 tess_position = vec3(vec4(tc_position[gl_InvocationID], 1.0)*model);
