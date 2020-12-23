@@ -204,12 +204,12 @@ void render_simplexnoise_texture(simplexnoise *snoise, float scale, float time, 
     glUniform1i(glGetUniformLocation(snoise->shader, "order_y"), order[1]);
     glUniform1i(glGetUniformLocation(snoise->shader, "order_z"), order[2]);
 
-    char e_str[3];
+    /*char e_str[3];
     for(int i=0; i < 6; i++) {
         sprintf(e_str, "e%d", i);
         //printf("e: %s %f\n", e_str, snoise->e[i]);
         glUniform1i(glGetUniformLocation(snoise->shader, e_str), snoise->e[i]);
-    }
+    }*/
     
     glBindVertexArray(snoise->vao);
     glDrawArrays(GL_TRIANGLES, 0, snoise->vertex_number);

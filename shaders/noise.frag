@@ -10,14 +10,6 @@ uniform float width;
 uniform float height;
 uniform float terrain_scale;
 
-uniform float e0;
-uniform float e1;
-uniform float e2;
-uniform float e3;
-uniform float e4;
-uniform float e5;
-
-
 uniform int reverse;
 uniform int order_x;
 uniform int order_y;
